@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNAF: SBVR - Setup Wizard</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #1a1a1a;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none; 
+        }
+
+        .glass-panel {
+            background: rgba(80, 75, 70, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        .step-content { display: none; }
+        .step-content.active { display: block; }
+
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        .step-content.active .stagger-item {
+            animation: slideUpFade 0.5s ease forwards;
+        }
+        .step-content.active .stagger-item:nth-child(1) { animation-delay: 0.1s; }
+        .step-content.active .stagger-item:nth-child(2) { animation-delay: 0.2s; }
+        .step-content.active .stagger-item:nth-child(3) { animation-delay: 0.3s; }
+        .step-content.active .stagger-item:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .float-anim { animation: float 4s ease-in-out infinite; }
+        .float-anim-delayed { animation: float 4s ease-in-out 2s infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .spin-slow { animation: spin 3s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-dot { animation: bounce 1.4s infinite ease-in-out both; }
+        .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .pop-in { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .pulse-ring { animation: pulseRing 3s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); opacity: 0.6; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center p-4 md:p-8 relative" style="background-image: url('background.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+
+    <!-- ÚNICA ZONA DE ARRASTRE PERMITIDA -->
+    <div class="fixed top-0 left-0 w-full h-12 z-40 pywebview-drag-region cursor-move"></div>
+    
+    <!-- BOTÓN CERRAR -->
+    <button onclick="apiCall('close_app')" class="absolute top-6 right-6 z-50 text-white/50 hover:text-white transition-colors focus:outline-none cursor-pointer">
+        <i data-lucide="x" class="w-7 h-7 bg-black/20 backdrop-blur-md rounded-full p-1 border border-white/10"></i>
+    </button>
+
+    <!-- PANTALLA DE SELECCIÓN DE IDIOMA -->
+    <div id="language-selector" class="fixed inset-0 z-[60] flex flex-col items-center justify-center transition-opacity duration-700 opacity-100 backdrop-blur-3xl bg-black/80">
+        <div class="absolute inset-0 bg-[url('background.jpg')] bg-cover bg-center opacity-20"></div>
+        <div class="relative z-10 flex flex-col items-center px-4">
+            <i data-lucide="globe" class="w-16 h-16 text-white/80 mb-6 float-anim"></i>
+            <h1 class="text-3xl md:text-5xl font-bold text-white tracking-tight mb-2 drop-shadow-lg text-center">Select Language</h1>
+            <h2 class="text-xl md:text-2xl font-light text-white/70 tracking-widest uppercase mb-12 text-center">Selecciona tu idioma</h2>
+            
+            <div class="flex flex-col sm:flex-row gap-6">
+                <button onclick="selectLang('en')" class="px-8 py-4 w-64 rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 flex items-center justify-center gap-3 group focus:outline-none cursor-pointer shadow-lg hover:shadow-white/20">
+                    <span class="text-xl font-medium">English</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300"></i>
+                </button>
+                <button onclick="selectLang('es')" class="px-8 py-4 w-64 rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 flex items-center justify-center gap-3 group focus:outline-none cursor-pointer shadow-lg hover:shadow-white/20">
+                    <span class="text-xl font-medium">Español</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL SCREEN LOADER -->
+    <div id="full-screen-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-700 opacity-0 pointer-events-none">
+        <div class="absolute inset-0 bg-[url('background.jpg')] bg-cover bg-center"></div>
+        <div class="absolute inset-0 bg-[#3a3733]/70 backdrop-blur-2xl"></div>
+        
+        <div class="relative z-10 flex flex-col items-center">
+            <h1 class="text-6xl md:text-8xl font-bold text-white tracking-tight mb-8 drop-shadow-lg text-center">FNAF: SBVR</h1>
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-4 rounded-full bg-white/80 loader-dot"></div>
+                <div class="w-4 h-4 rounded-full bg-white/80 loader-dot"></div>
+                <div class="w-4 h-4 rounded-full bg-white/80 loader-dot"></div>
+            </div>
+            <p id="loader-text" class="mt-6 text-white/80 text-sm font-medium tracking-widest uppercase">Iniciando Instalador</p>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <main id="main-app" class="relative w-full max-w-[1250px] h-[85vh] min-h-[650px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 backdrop-blur-xl bg-black/40 transition-all duration-1000 opacity-0 scale-95 flex flex-col md:flex-row p-4 md:p-6 gap-6">
+        
+        <!-- LEFT SIDE -->
+        <div class="w-full md:w-5/12 relative flex flex-col items-center justify-center rounded-[2rem] overflow-hidden bg-white/5 border border-white/10 shadow-inner">
+            <div class="absolute top-8 left-8 hidden md:block w-full z-20">
+                <h1 class="text-3xl font-bold text-white/90 tracking-tight drop-shadow-md">FNAF: SBVR</h1>
+            </div>
+            <div id="visual-content" class="w-full h-full flex items-center justify-center relative transition-opacity duration-500"></div>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div id="wizard-panel" class="w-full md:w-7/12 h-full glass-panel flex flex-col p-8 md:p-10 z-20 transition-all duration-500 rounded-[2rem]">
+            
+            <div class="shrink-0 mb-6 z-10 transition-all duration-300" id="header-container">
+                <p id="step-indicator" class="text-white/60 text-xs md:text-sm font-medium tracking-widest uppercase mb-2 transition-all duration-300">
+                    Paso 01 / 04
+                </p>
+                <h2 id="step-title" class="text-3xl md:text-4xl font-semibold text-white leading-tight transition-all duration-300 drop-shadow-sm"></h2>
+                <p id="step-desc" class="text-white/80 text-sm md:text-base font-light mt-3 leading-relaxed transition-all duration-300"></p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-3 flex flex-col relative min-h-0">
+                <div class="flex-1 flex flex-col justify-start pb-4">
+                    
+                    <!-- STEP 1 -->
+                    <div id="step-1" class="step-content w-full">
+                        <div class="stagger-item mt-4 bg-white/5 border border-white/10 rounded-2xl p-6 text-center transition-all duration-300 shadow-md" id="saves-card">
+                            <!-- Inyectado por JS -->
+                        </div>
+                        <p class="text-white/50 text-xs mt-6 stagger-item px-2 text-center" data-i18n="saves_warning">
+                            * Es obligatorio haber abierto el juego normal al menos una vez para generar los archivos de guardado base y poder continuar con la instalación.
+                        </p>
+                    </div>
+
+                    <!-- STEP 2 -->
+                    <div id="step-2" class="step-content w-full">
+                        <div class="stagger-item mt-4 bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-300 border-dashed" id="folder-card">
+                            <div class="w-16 h-16 rounded-full bg-white/10 border border-white/5 flex items-center justify-center mb-4 text-white/80 transition-colors shadow-inner" id="folder-status-icon">
+                                <i data-lucide="folder-search" class="w-8 h-8"></i>
+                            </div>
+                            <h4 class="text-white font-medium mb-2 truncate max-w-full px-2" id="folder-status-title" data-i18n="folder_none">Ninguna carpeta seleccionada</h4>
+                            <p class="text-white/60 text-sm mb-6 max-w-xs" id="folder-status-desc" data-i18n="folder_none_desc">Busca la carpeta principal llamada "Five Nights at Freddys Security Breach".</p>
+                            
+                            <button id="btn-select-folder" class="px-6 py-3 rounded-full bg-white/10 border border-white/30 text-white hover:bg-white/20 transition-all duration-300 flex items-center gap-2 text-sm font-medium focus:outline-none cursor-pointer shadow-md">
+                                <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                                <span id="btn-folder-text" data-i18n="btn_browse">Examinar...</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3 -->
+                    <div id="step-3" class="step-content w-full">
+                        <div class="stagger-item mt-4 space-y-4">
+                            <div class="space-y-3">
+                                <div class="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/10 transition-transform hover:-translate-y-1 duration-300 shadow-sm">
+                                    <div class="bg-gradient-to-br from-white/10 to-white/5 p-2.5 rounded-xl border border-white/10 shrink-0 shadow-inner">
+                                        <i data-lucide="cpu" class="w-5 h-5 text-blue-200"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-white text-sm font-medium" data-i18n="feature_1_title">Motor UEVR</h5>
+                                        <p class="text-white/60 text-xs mt-1 leading-relaxed" data-i18n="feature_1_desc">Se copiarán los inyectores necesarios para habilitar la Realidad Virtual en el motor gráfico.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/10 transition-transform hover:-translate-y-1 duration-300 shadow-sm">
+                                    <div class="bg-gradient-to-br from-white/10 to-white/5 p-2.5 rounded-xl border border-white/10 shrink-0 shadow-inner">
+                                        <i data-lucide="settings-2" class="w-5 h-5 text-emerald-200"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-white text-sm font-medium" data-i18n="feature_2_title">Perfiles y Controles</h5>
+                                        <p class="text-white/60 text-xs mt-1 leading-relaxed" data-i18n="feature_2_desc">Ajustes preconfigurados (.sav y .zip) listos para que el mod funcione perfectamente out-of-the-box.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/10 transition-transform hover:-translate-y-1 duration-300 shadow-sm">
+                                    <div class="bg-gradient-to-br from-white/10 to-white/5 p-2.5 rounded-xl border border-white/10 shrink-0 shadow-inner">
+                                        <i data-lucide="monitor-play" class="w-5 h-5 text-purple-200"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-white text-sm font-medium" data-i18n="feature_3_title">Launcher Personalizado</h5>
+                                        <p class="text-white/60 text-xs mt-1 leading-relaxed" data-i18n="feature_3_desc">Un acceso directo en el escritorio para iniciar el juego directamente en modo VR.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4 -->
+                    <div id="step-4" class="step-content w-full">
+                        <div class="stagger-item mt-10 flex flex-col items-center text-center">
+                            <i data-lucide="server-cog" class="w-14 h-14 text-white/70 mb-5 animate-pulse"></i>
+                            <p class="text-white/90 text-sm md:text-base leading-relaxed mb-4 max-w-xs" data-i18n="installing_desc">
+                                Copiando archivos y aplicando configuraciones en el directorio del juego...
+                            </p>
+                            <p class="text-white/50 text-xs" data-i18n="installing_wait">Esto tomará unos segundos.</p>
+                        </div>
+                    </div>
+
+                    <!-- SUCCESS -->
+                    <div id="step-success" class="step-content w-full">
+                        <div class="stagger-item space-y-6 mt-2">
+                            <div class="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-inner">
+                                <h3 class="text-white/50 font-semibold mb-4 text-[11px] uppercase tracking-widest" data-i18n="summary_title">Resumen de Instalación</h3>
+                                <ul class="text-white/80 text-sm space-y-3">
+                                    <li class="flex items-center justify-between border-b border-white/5 pb-2">
+                                        <span class="flex items-center gap-2"><i data-lucide="gamepad-2" class="w-4 h-4 text-white/70"></i> <span data-i18n="summary_mod">Mod</span></span>
+                                        <span class="text-white font-medium">FNAF: SBVR</span>
+                                    </li>
+                                    <li class="flex items-center justify-between border-b border-white/5 pb-2">
+                                        <span class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-400"></i> <span data-i18n="summary_status">Estado</span></span>
+                                        <span class="text-green-400 font-medium bg-green-400/10 px-2 py-0.5 rounded-md" data-i18n="summary_status_ok">Completado</span>
+                                    </li>
+                                    <li class="flex items-center justify-between pb-1">
+                                        <span class="flex items-center gap-2"><i data-lucide="folder" class="w-4 h-4 text-white/70"></i> <span data-i18n="summary_path">Ruta</span></span>
+                                        <span class="text-white/70 font-mono text-xs text-right max-w-[150px] truncate" id="summary-path">...</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <p class="text-white/80 text-sm mb-4 leading-relaxed text-center px-4" id="summary-hint" data-i18n="summary_hint">
+                                Usa el acceso directo <strong class="text-white">"FNAF SBVR"</strong> creado en tu escritorio para iniciar la experiencia.
+                            </p>
+                            <button onclick="apiCall('close_app')" class="w-full px-8 py-4 rounded-xl bg-white text-[#504B46] font-bold hover:bg-[#F5F5F5] transition-all duration-300 shadow-[0_10px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.2)] hover:-translate-y-1 flex items-center justify-center gap-2 mt-2 focus:outline-none cursor-pointer">
+                                <span data-i18n="btn_close">Cerrar Instalador</span> <i data-lucide="log-out" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- CONTROLS -->
+            <div id="controls-container" class="mt-4 pt-6 shrink-0 flex items-center justify-between w-full transition-opacity duration-300 border-t border-white/10">
+                <div class="flex gap-2" id="dot-indicators">
+                    <div class="w-2 h-2 rounded-full bg-white transition-all duration-300 shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+                    <div class="w-2 h-2 rounded-full bg-white/20 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-white/20 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-white/20 transition-all duration-300"></div>
+                </div>
+
+                <div class="flex gap-3 ml-auto">
+                    <button id="btn-prev" class="hidden w-11 h-11 rounded-full border border-white/30 bg-white/5 flex items-center justify-center text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300 focus:outline-none cursor-pointer">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                    <button id="btn-next" class="px-8 py-3 rounded-full border border-white/50 bg-white/10 text-white hover:bg-white hover:text-[#504B46] transition-all duration-300 flex items-center justify-center focus:outline-none font-medium text-sm gap-2 cursor-pointer shadow-md hover:shadow-lg">
+                        <span id="next-text" data-i18n="btn_next">Siguiente</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4" id="next-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- TRANSLATIONS DICTIONARY ---
+        const i18n = {
+            es: {
+                loader_text: "Iniciando Instalador",
+                step_prefix: "Paso",
+                step_of: "de",
+                step_1_title: "Preparativos VR",
+                step_1_desc: "Verificando el estado actual de tu juego.",
+                step_2_title: "Directorio del Juego",
+                step_2_desc: "Selecciona la carpeta base de FNAF: Security Breach.",
+                step_3_title: "Listo para instalar",
+                step_3_desc: "Revisa los componentes que se integrarán en tu equipo.",
+                step_4_title: "Instalando Mod",
+                step_4_desc: "Por favor, no cierres el instalador.",
+                step_success_title: "¡Instalación Exitosa!",
+                step_success_desc: "El mod FNAF: SBVR está instalado y configurado.",
+                
+                btn_next: "Siguiente",
+                btn_install: "Instalar",
+                btn_close: "Cerrar Instalador",
+                
+                saves_checking: "Comprobando partidas locales...",
+                saves_checking_desc: "Buscando configuración previa del juego.",
+                saves_found: "Partidas Encontradas",
+                saves_found_desc: "El juego base está listo para recibir el mod.",
+                saves_not_found: "No se encontraron partidas",
+                saves_not_found_desc: "Abre el juego normal, llega al menú, ciérralo y reinicia este instalador.",
+                saves_warning: "* Es obligatorio haber abierto el juego normal al menos una vez para generar los archivos de guardado base y poder continuar con la instalación.",
+                
+                folder_none: "Ninguna carpeta seleccionada",
+                folder_none_desc: "Busca la carpeta principal llamada \"Five Nights at Freddys Security Breach\".",
+                btn_browse: "Examinar...",
+                btn_change_folder: "Cambiar Carpeta",
+                btn_searching: "Buscando...",
+                btn_retry: "Intentar de nuevo",
+                folder_correct: "Carpeta Correcta",
+                folder_error: "Ejecutable no encontrado",
+                folder_error_desc: "La carpeta seleccionada no contiene los archivos base correctos del juego.",
+                
+                feature_1_title: "Motor UEVR",
+                feature_1_desc: "Se copiarán los inyectores necesarios para habilitar la Realidad Virtual en el motor gráfico.",
+                feature_2_title: "Perfiles y Controles",
+                feature_2_desc: "Ajustes preconfigurados (.sav y .zip) listos para que el mod funcione perfectamente out-of-the-box.",
+                feature_3_title: "Launcher Personalizado",
+                feature_3_desc: "Un acceso directo en el escritorio para iniciar el juego directamente en modo VR.",
+                
+                installing_desc: "Copiando archivos y aplicando configuraciones en el directorio del juego...",
+                installing_wait: "Esto tomará unos segundos.",
+                
+                summary_title: "Resumen de Instalación",
+                summary_mod: "Mod",
+                summary_status: "Estado",
+                summary_status_ok: "Completado",
+                summary_path: "Ruta",
+                summary_hint: 'Usa el acceso directo <strong class="text-white">"FNAF SBVR"</strong> creado en tu escritorio para iniciar la experiencia.',
+                
+                copying: "Iniciando copia...",
+                copy_success: "¡COPIADO CON ÉXITO!",
+                copy_error: "Error en instalación",
+                copy_error_desc: "Hubo un problema. Cierra e intenta de nuevo."
+            },
+            en: {
+                loader_text: "Starting Installer",
+                step_prefix: "Step",
+                step_of: "of",
+                step_1_title: "VR Preparations",
+                step_1_desc: "Verifying the current state of your game.",
+                step_2_title: "Game Directory",
+                step_2_desc: "Select the FNAF: Security Breach base folder.",
+                step_3_title: "Ready to Install",
+                step_3_desc: "Review the components that will be integrated into your system.",
+                step_4_title: "Installing Mod",
+                step_4_desc: "Please do not close the installer.",
+                step_success_title: "Installation Successful!",
+                step_success_desc: "The FNAF: SBVR mod is installed and configured.",
+                
+                btn_next: "Next",
+                btn_install: "Install",
+                btn_close: "Close Installer",
+                
+                saves_checking: "Checking local saves...",
+                saves_checking_desc: "Looking for previous game configuration.",
+                saves_found: "Saves Found",
+                saves_found_desc: "The base game is ready to receive the mod.",
+                saves_not_found: "No Saves Found",
+                saves_not_found_desc: "Open the normal game, reach the main menu, close it, and restart this installer.",
+                saves_warning: "* You must have launched the normal game at least once to generate base save files before continuing.",
+                
+                folder_none: "No folder selected",
+                folder_none_desc: "Locate the main folder named \"Five Nights at Freddys Security Breach\".",
+                btn_browse: "Browse...",
+                btn_change_folder: "Change Folder",
+                btn_searching: "Searching...",
+                btn_retry: "Try Again",
+                folder_correct: "Correct Folder",
+                folder_error: "Executable not found",
+                folder_error_desc: "The selected folder doesn't contain the correct base game files.",
+                
+                feature_1_title: "UEVR Engine",
+                feature_1_desc: "The required injectors to enable Virtual Reality in the graphics engine will be copied.",
+                feature_2_title: "Profiles & Controls",
+                feature_2_desc: "Preconfigured files (.sav and .zip) ready to make the mod work perfectly out-of-the-box.",
+                feature_3_title: "Custom Launcher",
+                feature_3_desc: "A handy desktop shortcut to launch the game directly in VR mode.",
+                
+                installing_desc: "Copying files and applying settings to your game directory...",
+                installing_wait: "This will take a few seconds.",
+                
+                summary_title: "Installation Summary",
+                summary_mod: "Mod",
+                summary_status: "Status",
+                summary_status_ok: "Completed",
+                summary_path: "Path",
+                summary_hint: 'Use the <strong class="text-white">"FNAF SBVR"</strong> shortcut created on your desktop to launch the experience.',
+                
+                copying: "Starting copy...",
+                copy_success: "COPIED SUCCESSFULLY!",
+                copy_error: "Installation Error",
+                copy_error_desc: "There was a problem. Please close and try again."
+            }
+        };
+
+        let currentLang = 'es'; // Default
+        const t = () => i18n[currentLang];
+
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t()[key]) {
+                    el.innerHTML = t()[key];
+                }
+            });
+            document.getElementById('loader-text').textContent = t().loader_text;
+            document.documentElement.lang = currentLang;
+        }
+
+        // --- API CALLER ---
+        async function apiCall(method, ...args) {
+            let retries = 30;
+            while (!window.pywebview && retries > 0) {
+                await new Promise(r => setTimeout(r, 100));
+                retries--;
+            }
+
+            if (window.pywebview && window.pywebview.api) {
+                try {
+                    return await window.pywebview.api[method](...args);
+                } catch (error) {
+                    console.error(`Error procesando ${method}:`, error);
+                    return null;
+                }
+            } else {
+                console.warn(`Simulando API Python: ${method}`, args);
+                if (method === 'check_saves') return new Promise(res => setTimeout(() => res(true), 1500));
+                if (method === 'select_folder') return new Promise(res => setTimeout(() => res("C:/Juegos/Five Nights at Freddys Security Breach"), 1000));
+                if (method === 'verify_exe') return new Promise(res => setTimeout(() => res(true), 500));
+                if (method === 'install') return new Promise(res => setTimeout(() => res("success"), 3500));
+                if (method === 'close_app') console.log("Cerrando...");
+            }
+        }
+
+        lucide.createIcons();
+
+        let currentStep = 1;
+        const totalSteps = 4;
+        let isFolderSelected = false;
+        let selectedFolderPath = "";
+        let hasValidSaves = false;
+
+        const btnNext = document.getElementById('btn-next');
+        const btnPrev = document.getElementById('btn-prev');
+        const nextText = document.getElementById('next-text');
+        const nextIcon = document.getElementById('next-icon');
+        const headerIndicator = document.getElementById('step-indicator');
+        const headerTitle = document.getElementById('step-title');
+        const headerDesc = document.getElementById('step-desc');
+        const visualContent = document.getElementById('visual-content');
+
+        // LANGUAGE SELECTION LOGIC
+        function selectLang(lang) {
+            currentLang = lang;
+            applyTranslations();
+            
+            const langScreen = document.getElementById('language-selector');
+            const loaderScreen = document.getElementById('full-screen-loader');
+            
+            langScreen.classList.remove('opacity-100');
+            langScreen.classList.add('opacity-0', 'pointer-events-none');
+            
+            setTimeout(() => {
+                langScreen.style.display = 'none';
+                loaderScreen.classList.remove('opacity-0', 'pointer-events-none');
+                loaderScreen.classList.add('opacity-100');
+                
+                // Continue with original startup flow
+                setTimeout(() => {
+                    loaderScreen.classList.replace('opacity-100', 'opacity-0');
+                    setTimeout(() => loaderScreen.remove(), 700);
+                    
+                    const app = document.getElementById('main-app');
+                    app.classList.remove('opacity-0', 'scale-95');
+                    app.classList.add('opacity-100', 'scale-100');
+
+                    // Disable next button until saves are checked
+                    btnNext.disabled = true;
+                    btnNext.classList.add('opacity-50', 'cursor-not-allowed');
+                    
+                    checkInitialSaves();
+                    updateUI();
+                }, 2000);
+                
+            }, 700);
+        }
+
+        async function checkInitialSaves() {
+            const card = document.getElementById('saves-card');
+            
+            // Initial loading state
+            card.innerHTML = `
+                <i data-lucide="loader-2" class="w-8 h-8 mx-auto text-white/50 animate-spin mb-3"></i>
+                <h4 class="text-white font-medium mb-2">${t().saves_checking}</h4>
+                <p class="text-white/60 text-sm">${t().saves_checking_desc}</p>
+            `;
+            lucide.createIcons();
+
+            const hasSaves = await apiCall('check_saves');
+            hasValidSaves = hasSaves; 
+            
+            card.classList.remove('bg-white/5', 'border-white/10');
+            
+            if (hasSaves) {
+                card.classList.add('bg-green-900/20', 'border-green-500/30');
+                card.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-400"></i>
+                    </div>
+                    <h4 class="text-white font-medium mb-1">${t().saves_found}</h4>
+                    <p class="text-white/60 text-sm">${t().saves_found_desc}</p>
+                `;
+            } else {
+                card.classList.add('bg-red-900/20', 'border-red-500/30');
+                card.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-red-400"></i>
+                    </div>
+                    <h4 class="text-white font-medium mb-1">${t().saves_not_found}</h4>
+                    <p class="text-white/60 text-sm">${t().saves_not_found_desc}</p>
+                `;
+            }
+            updateUI(); 
+            lucide.createIcons();
+        }
+
+        function updateUI() {
+            // Update active content tab
+            document.querySelectorAll('.step-content').forEach((el, index) => {
+                if (el.id === 'step-success') return;
+                if (index + 1 === currentStep) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+
+            // Update Header texts dynamically based on current step
+            if(currentStep <= totalSteps) {
+                headerTitle.textContent = t()[`step_${currentStep}_title`];
+                headerDesc.textContent = t()[`step_${currentStep}_desc`];
+                headerIndicator.textContent = `${t().step_prefix} 0${currentStep} ${t().step_of} 04`;
+            }
+
+            // Dots
+            const dots = document.getElementById('dot-indicators').children;
+            for(let i=0; i<dots.length; i++) {
+                if(i < currentStep) dots[i].className = "w-2 h-2 rounded-full bg-white transition-all duration-300 shadow-[0_0_8px_rgba(255,255,255,0.8)]";
+                else dots[i].className = "w-2 h-2 rounded-full bg-white/20 transition-all duration-300";
+            }
+
+            btnPrev.classList.toggle('hidden', currentStep === 1);
+            
+            if (currentStep === 1) {
+                nextText.textContent = t().btn_next;
+                nextIcon.setAttribute('data-lucide', 'arrow-right');
+                btnNext.disabled = !hasValidSaves;
+                btnNext.classList.toggle('opacity-50', !hasValidSaves);
+                btnNext.classList.toggle('cursor-not-allowed', !hasValidSaves);
+            } else if (currentStep === 2) {
+                nextText.textContent = t().btn_next;
+                nextIcon.setAttribute('data-lucide', 'arrow-right');
+                btnNext.disabled = !isFolderSelected;
+                btnNext.classList.toggle('opacity-50', !isFolderSelected);
+                btnNext.classList.toggle('cursor-not-allowed', !isFolderSelected);
+            } else if (currentStep === 3) {
+                nextText.textContent = t().btn_install;
+                nextIcon.setAttribute('data-lucide', 'download');
+                btnNext.disabled = false;
+                btnNext.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else if (currentStep === 4) {
+                btnPrev.classList.add('hidden');
+                btnNext.classList.add('hidden');
+                startInstallationSequence();
+            }
+
+            updateMainVisual(currentStep);
+            lucide.createIcons();
+        }
+
+        function updateMainVisual(step) {
+            visualContent.style.opacity = '0';
+            
+            setTimeout(() => {
+                let newHTML = '';
+                
+                if (step === 1) {
+                    newHTML = `
+                        <div class="relative flex items-center justify-center w-full h-full">
+                            <div class="absolute w-56 h-56 bg-blue-500/20 rounded-full blur-3xl pulse-ring"></div>
+                            <div class="relative z-10 p-6 bg-gradient-to-br from-white/10 to-transparent border border-white/20 rounded-3xl backdrop-blur-md float-anim shadow-2xl">
+                                <i data-lucide="hard-drive" class="w-20 h-20 text-blue-100"></i>
+                            </div>
+                            <div class="absolute top-1/4 right-1/4 p-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md float-anim-delayed shadow-lg">
+                                <i data-lucide="search" class="w-6 h-6 text-white/70"></i>
+                            </div>
+                            <div class="absolute bottom-1/4 left-1/4 p-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md float-anim shadow-lg" style="animation-delay: 1s;">
+                                <i data-lucide="save" class="w-6 h-6 text-green-300"></i>
+                            </div>
+                        </div>
+                    `;
+                } else if (step === 2) {
+                    newHTML = `
+                        <div class="relative flex items-center justify-center w-full h-full">
+                            <div class="absolute w-56 h-56 bg-amber-500/10 rounded-full blur-3xl pulse-ring"></div>
+                            <div class="relative z-10 float-anim" id="visual-folder-container">
+                                <i data-lucide="folder-search-2" class="w-32 h-32 text-amber-100/80 transition-all duration-500 drop-shadow-lg" id="visual-folder-icon"></i>
+                                <div id="visual-spinner" class="absolute inset-0 m-auto w-16 h-16 border-4 border-transparent border-t-white/80 border-r-white/30 rounded-full spin-slow opacity-0 transition-opacity"></div>
+                                <div id="visual-check" class="absolute -bottom-2 -right-2 p-2.5 bg-green-500/20 border border-green-500/40 rounded-full opacity-0 scale-50 transition-all duration-500 backdrop-blur-md shadow-lg">
+                                    <i data-lucide="check" class="w-6 h-6 text-green-300 stroke-[3]"></i>
+                                </div>
+                                <div id="visual-cross" class="absolute -bottom-2 -right-2 p-2.5 bg-red-500/20 border border-red-500/40 rounded-full opacity-0 scale-50 transition-all duration-500 backdrop-blur-md shadow-lg">
+                                    <i data-lucide="x" class="w-6 h-6 text-red-300 stroke-[3]"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (step === 3) {
+                    newHTML = `
+                        <div class="relative flex items-center justify-center w-full h-full">
+                             <div class="absolute w-56 h-56 bg-purple-500/20 rounded-full blur-3xl pulse-ring"></div>
+                             <div class="relative z-10 flex flex-col items-center justify-center float-anim h-full w-full">
+                                  <div class="absolute p-5 bg-gradient-to-tr from-purple-500/20 to-transparent border border-white/10 rounded-2xl transform rotate-12 translate-x-8 -translate-y-4 backdrop-blur-md shadow-xl transition-all duration-500 hover:rotate-6">
+                                      <i data-lucide="cpu" class="w-10 h-10 text-purple-200"></i>
+                                  </div>
+                                  <div class="absolute p-6 bg-gradient-to-br from-white/15 to-white/5 border border-white/30 rounded-2xl z-20 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:scale-105">
+                                      <i data-lucide="gamepad-2" class="w-16 h-16 text-white drop-shadow-md"></i>
+                                  </div>
+                                  <div class="absolute p-5 bg-gradient-to-tl from-blue-500/20 to-transparent border border-white/10 rounded-2xl transform -rotate-12 -translate-x-10 translate-y-6 z-10 backdrop-blur-md shadow-xl transition-all duration-500 hover:-rotate-6">
+                                      <i data-lucide="monitor-play" class="w-10 h-10 text-blue-200"></i>
+                                  </div>
+                             </div>
+                        </div>
+                    `;
+                } else if (step === 4) {
+                    newHTML = `
+                        <div class="relative flex flex-col items-center justify-center w-full h-full p-6 text-center">
+                            <div class="absolute w-52 h-52 bg-blue-500/20 rounded-full blur-3xl pulse-ring"></div>
+                            <i data-lucide="cloud-download" class="w-16 h-16 md:w-20 md:h-20 text-white animate-bounce z-10 mb-8 drop-shadow-lg"></i>
+                            
+                            <div class="w-full max-w-[220px] bg-black/40 rounded-full h-3 mb-3 overflow-hidden shadow-inner border border-white/10 relative z-10">
+                                <div id="download-progress-fill" class="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 h-full rounded-full transition-all duration-300 relative shadow-[0_0_10px_rgba(129,140,248,0.5)]" style="width: 0%">
+                                    <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col items-center w-full z-10">
+                                <span id="download-progress-text" class="text-white text-lg font-bold mb-0.5 tracking-widest drop-shadow-md">0%</span>
+                                <span id="download-status" class="text-white/60 text-xs tracking-wider uppercase text-center font-medium">${t().copying}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                visualContent.innerHTML = newHTML;
+                lucide.createIcons();
+                visualContent.style.opacity = '1';
+                
+                if(step === 2 && isFolderSelected) {
+                    setTimeout(() => setFolderVisualSuccess(), 100);
+                }
+
+            }, 300);
+        }
+
+        const btnSelectFolder = document.getElementById('btn-select-folder');
+        
+        btnSelectFolder.addEventListener('click', async () => {
+            btnSelectFolder.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>${t().btn_searching}</span>`;
+            lucide.createIcons();
+            btnSelectFolder.classList.add('opacity-70', 'cursor-wait');
+
+            const vFolder = document.getElementById('visual-folder-icon');
+            const vSpinner = document.getElementById('visual-spinner');
+            const vCross = document.getElementById('visual-cross');
+            const vCheck = document.getElementById('visual-check');
+            
+            if(vFolder) vFolder.classList.replace('text-amber-100/80', 'text-white/20');
+            if(vSpinner) vSpinner.classList.replace('opacity-0', 'opacity-100');
+            if(vCross) vCross.classList.add('opacity-0', 'scale-50');
+            if(vCheck) vCheck.classList.add('opacity-0', 'scale-50');
+
+            const folder = await apiCall('select_folder');
+            
+            if (folder) {
+                const isValid = await apiCall('verify_exe', folder);
+                
+                if (isValid) {
+                    isFolderSelected = true;
+                    selectedFolderPath = folder;
+                    document.getElementById('summary-path').textContent = folder;
+                    
+                    document.getElementById('folder-status-icon').innerHTML = '<i data-lucide="folder-check" class="w-8 h-8 text-green-300"></i>';
+                    document.getElementById('folder-status-icon').classList.add('bg-green-500/20', 'border-green-500/30');
+                    
+                    const titleEl = document.getElementById('folder-status-title');
+                    titleEl.textContent = t().folder_correct;
+                    titleEl.classList.remove('text-red-400');
+                    
+                    document.getElementById('folder-status-desc').textContent = folder;
+                    
+                    document.getElementById('folder-card').classList.add('bg-green-900/10', 'border-green-500/30');
+                    document.getElementById('folder-card').classList.remove('bg-white/5', 'border-white/10', 'bg-red-900/10', 'border-red-500/30');
+                    
+                    btnSelectFolder.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4"></i><span id="btn-folder-text">${t().btn_change_folder}</span>`;
+                    btnSelectFolder.classList.replace('bg-white/10', 'bg-white/20');
+                    
+                    setFolderVisualSuccess();
+                    updateUI();
+                } else {
+                    isFolderSelected = false;
+                    
+                    document.getElementById('folder-status-icon').innerHTML = '<i data-lucide="x-circle" class="w-8 h-8 text-red-400"></i>';
+                    document.getElementById('folder-status-icon').classList.add('bg-red-500/20', 'border-red-500/30');
+                    
+                    const titleEl = document.getElementById('folder-status-title');
+                    titleEl.textContent = t().folder_error;
+                    titleEl.classList.add('text-red-400');
+                    
+                    document.getElementById('folder-status-desc').textContent = t().folder_error_desc;
+                    
+                    document.getElementById('folder-card').classList.add('bg-red-900/10', 'border-red-500/30');
+                    document.getElementById('folder-card').classList.remove('bg-white/5', 'border-white/10', 'bg-green-900/10', 'border-green-500/30');
+                    
+                    btnSelectFolder.innerHTML = `<i data-lucide="folder-search" class="w-4 h-4"></i><span id="btn-folder-text">${t().btn_retry}</span>`;
+                    
+                    setFolderVisualError();
+                    updateUI(); 
+                }
+            } else {
+                if(!isFolderSelected) {
+                    btnSelectFolder.innerHTML = `<i data-lucide="folder-plus" class="w-4 h-4"></i><span id="btn-folder-text">${t().btn_browse}</span>`;
+                } else {
+                    btnSelectFolder.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4"></i><span id="btn-folder-text">${t().btn_change_folder}</span>`;
+                }
+                if(vSpinner) vSpinner.classList.replace('opacity-100', 'opacity-0');
+                if(vFolder) vFolder.classList.replace('text-white/20', 'text-amber-100/80');
+            }
+
+            btnSelectFolder.classList.remove('cursor-wait', 'opacity-70');
+            lucide.createIcons();
+        });
+
+        function setFolderVisualSuccess() {
+            const vFolder = document.getElementById('visual-folder-icon');
+            const vSpinner = document.getElementById('visual-spinner');
+            const vCheck = document.getElementById('visual-check');
+            
+            if(vSpinner) vSpinner.classList.replace('opacity-100', 'opacity-0');
+            if(vFolder) {
+                vFolder.classList.replace('text-white/20', 'text-green-300');
+                vFolder.classList.replace('text-amber-100/80', 'text-green-300');
+                vFolder.setAttribute('data-lucide', 'folder-check');
+                lucide.createIcons();
+            }
+            if(vCheck) {
+                vCheck.classList.remove('opacity-0', 'scale-50');
+                vCheck.classList.add('opacity-100', 'scale-100');
+            }
+        }
+
+        function setFolderVisualError() {
+            const vFolder = document.getElementById('visual-folder-icon');
+            const vSpinner = document.getElementById('visual-spinner');
+            const vCross = document.getElementById('visual-cross');
+            
+            if(vSpinner) vSpinner.classList.replace('opacity-100', 'opacity-0');
+            if(vFolder) {
+                vFolder.classList.replace('text-white/20', 'text-red-300');
+                vFolder.classList.replace('text-amber-100/80', 'text-red-300');
+                vFolder.setAttribute('data-lucide', 'folder-x');
+                lucide.createIcons();
+            }
+            if(vCross) {
+                vCross.classList.remove('opacity-0', 'scale-50');
+                vCross.classList.add('opacity-100', 'scale-100');
+            }
+        }
+
+        function startInstallationSequence() {
+            setTimeout(async () => {
+                let progress = 0;
+                const progressFill = document.getElementById('download-progress-fill');
+                const progressText = document.getElementById('download-progress-text');
+                const statusText = document.getElementById('download-status');
+
+                if(!progressFill) return;
+
+                const fakeInterval = setInterval(() => {
+                    if (progress < 90) {
+                        progress += Math.floor(Math.random() * 5) + 1;
+                        if(progress > 90) progress = 90;
+                        progressFill.style.width = `${progress}%`;
+                        progressText.textContent = `${progress}%`;
+                    }
+                }, 200);
+
+                // --- AHORA SE ENVÍA EL IDIOMA (currentLang) EN LUGAR DE LA DESCRIPCIÓN ---
+                const result = await apiCall('install', selectedFolderPath, currentLang);
+
+                clearInterval(fakeInterval);
+
+                if (result === "success") {
+                    progress = 100;
+                    progressFill.style.width = `100%`;
+                    progressText.textContent = `100%`;
+                    statusText.textContent = t().copy_success;
+                    statusText.classList.add('text-green-300');
+                    
+                    setTimeout(showFinalSuccessScreen, 900);
+                } else {
+                    statusText.textContent = t().copy_error;
+                    statusText.classList.add("text-red-400");
+                    document.getElementById('step-desc').textContent = t().copy_error_desc;
+                }
+            }, 350); 
+        }
+
+        function showFinalSuccessScreen() {
+            document.getElementById('step-4').classList.remove('active');
+            document.getElementById('controls-container').classList.add('hidden');
+            
+            const successStep = document.getElementById('step-success');
+            
+            headerTitle.textContent = t().step_success_title;
+            headerDesc.textContent = t().step_success_desc;
+            headerIndicator.textContent = " "; // Blank out or custom string
+
+            successStep.classList.add('active');
+            
+            visualContent.style.opacity = '0';
+            setTimeout(() => {
+                visualContent.innerHTML = `
+                    <div class="relative w-full h-full flex items-center justify-center pop-in">
+                        <div class="absolute w-64 h-64 bg-green-500/20 rounded-full blur-3xl pulse-ring" style="animation-duration: 3s;"></div>
+                        <div class="w-36 h-36 md:w-48 md:h-48 rounded-full bg-gradient-to-tr from-green-400 to-emerald-600 p-1 shadow-[0_0_50px_rgba(74,222,128,0.3)] z-10 transition-transform hover:scale-105 duration-300">
+                            <div class="w-full h-full rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20">
+                                <i data-lucide="check" class="w-20 h-20 text-white stroke-[3] drop-shadow-md"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+                visualContent.style.opacity = '1';
+            }, 300);
+        }
+
+        btnNext.addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+            }
+        });
+
+        btnPrev.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        });
+    </script>
+</body>
+</html>

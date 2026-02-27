@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNAF: SBVR - Launcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .pulse-ring {
+            animation: pulseRing 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .float-anim {
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        body.draggable { cursor: grab; }
+        body.draggable:active { cursor: grabbing; }
+    </style>
+</head>
+
+<body class="draggable h-screen w-screen m-0 bg-[url('background.jpg')] bg-cover bg-center">
+
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md z-0 pointer-events-none"></div>
+
+    <main class="w-full h-full relative overflow-hidden flex flex-col items-center justify-center z-10">
+
+        <button onclick="closeApp()" class="absolute top-4 right-4 z-50 text-white/50 hover:text-white transition-colors focus:outline-none cursor-pointer">
+            <i data-lucide="x" class="w-6 h-6 bg-white/10 rounded-full p-1 border border-white/20 hover:bg-red-500/50 hover:border-red-500 transition-all"></i>
+        </button>
+
+        <div class="relative z-10 w-full px-8 flex flex-col items-center pointer-events-none">
+
+            <!-- HEADER -->
+            <div class="text-center mb-8 pointer-events-auto">
+                <h1 class="text-3xl font-bold text-white tracking-tight drop-shadow-lg">FNAF: SBVR</h1>
+                <p class="text-white/60 text-sm mt-1 font-medium tracking-widest uppercase" id="status-text">Selecciona el modo de juego</p>
+            </div>
+
+            <!-- VISTA 1: BOTONES -->
+            <div id="main-menu" class="w-full max-w-md flex flex-col gap-4 fade-in pointer-events-auto">
+
+                <button onclick="launchGame('vr')" class="group relative w-full p-5 rounded-2xl bg-white/5 border border-purple-500/30 hover:bg-purple-500/10 hover:border-purple-500/60 transition-all duration-300 flex items-center gap-5 cursor-pointer shadow-lg overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div class="bg-gradient-to-br from-purple-500/20 to-purple-500/5 p-3 rounded-xl border border-purple-500/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                        <i data-lucide="headset" class="w-8 h-8 text-purple-300"></i>
+                    </div>
+                    <div class="text-left flex-1 relative z-10">
+                        <h2 id="btn-vr-title" class="text-white font-semibold text-lg">Iniciar en Realidad Virtual</h2>
+                        <p id="btn-vr-desc" class="text-white/50 text-xs mt-0.5">Inyecta UEVR automáticamente</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-white/30 group-hover:text-purple-300 transition-colors relative z-10"></i>
+                </button>
+
+                <button onclick="launchGame('flat')" class="group w-full p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all duration-300 flex items-center gap-5 cursor-pointer shadow-lg">
+                    <div class="bg-gradient-to-br from-white/10 to-white/5 p-3 rounded-xl border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                        <i data-lucide="monitor-play" class="w-8 h-8 text-blue-200"></i>
+                    </div>
+                    <div class="text-left flex-1">
+                        <h2 id="btn-flat-title" class="text-white font-semibold text-lg">Jugar Original (Flat)</h2>
+                        <p id="btn-flat-desc" class="text-white/50 text-xs mt-0.5">Inicia el juego base sin mods</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-white/30 group-hover:text-white/70 transition-colors"></i>
+                </button>
+
+                <button id="btn-cancel" onclick="closeApp()" class="mt-2 text-white/40 hover:text-white text-sm font-medium transition-colors cursor-pointer w-max mx-auto px-4 py-2 rounded-full hover:bg-white/5">
+                    Cancelar
+                </button>
+            </div>
+
+            <!-- VISTA 2: ANIMACIÓN DE CARGA VR -->
+            <div id="loading-vr" class="hidden w-full flex-col items-center justify-center py-6 fade-in pointer-events-auto">
+                <div class="relative flex items-center justify-center w-full h-32 mb-4">
+                    <div class="absolute w-40 h-40 bg-purple-500/30 rounded-full blur-2xl pulse-ring"></div>
+                    <div class="relative z-10 p-5 bg-gradient-to-br from-white/10 to-transparent border border-white/20 rounded-3xl backdrop-blur-md float-anim shadow-2xl">
+                        <i data-lucide="headset" class="w-16 h-16 text-purple-200"></i>
+                    </div>
+                    <div class="absolute bottom-4 right-1/3 p-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md float-anim shadow-lg" style="animation-delay: 1s;">
+                        <i data-lucide="cpu" class="w-5 h-5 text-white/70"></i>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-purple-300 font-medium bg-purple-500/10 px-4 py-2 rounded-full border border-purple-500/20" id="vr-status-container">
+                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin" id="vr-spinner"></i>
+                    <span id="vr-status-text">Iniciando juego e inyectando motor...</span>
+                </div>
+                <p id="vr-warning-text" class="hidden text-white/80 text-xs mt-5 text-center px-4 py-2.5 bg-red-500/20 border border-red-500/30 rounded-xl max-w-xs shadow-lg fade-in">
+                    ⚠️ <strong class="text-white">No cierres esta ventana</strong> pues es la encargada de ejecutar el juego en VR.
+                </p>
+            </div>
+
+            <!-- VISTA 3: ERROR INTEGRADO -->
+            <div id="error-view" class="hidden w-full max-w-md flex-col items-center justify-center fade-in pointer-events-auto">
+                <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-full mb-4 shadow-[0_0_20px_rgba(239,68,68,0.2)] animate-pulse">
+                    <i data-lucide="alert-triangle" class="w-12 h-12 text-red-400"></i>
+                </div>
+                
+                <div class="w-full text-center">
+                    <h2 id="error-title" class="text-white font-bold text-xl mb-3 drop-shadow-md">No se pudo iniciar</h2>
+                    
+                    <div class="bg-black/30 border border-white/10 rounded-xl p-4 mb-4 backdrop-blur-sm text-left">
+                        <p class="text-red-300 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i data-lucide="info" class="w-3 h-3"></i> <span id="error-detail-label">Detalle del Error</span>
+                        </p>
+                        <p id="error-message" class="text-white/90 text-sm mb-3 font-medium"></p>
+
+                        <p class="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i data-lucide="lightbulb" class="w-3 h-3"></i> <span id="error-hint-label">Sugerencia</span>
+                        </p>
+                        <p id="error-hint" class="text-blue-100/80 text-sm"></p>
+                    </div>
+                </div>
+
+                <button onclick="resetUI()" class="w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all duration-300 text-white font-medium cursor-pointer shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    <span id="btn-error-back">Volver al Menú</span>
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // ── Internacionalización (i18n) ──────────────────────────────────────
+        let currentLang = 'es'; // Por defecto
+        
+        const translations = {
+            es: {
+                statusSelect: "Selecciona el modo de juego",
+                statusVR: "MODO REALIDAD VIRTUAL",
+                statusFlat: "MODO ORIGINAL (FLAT)",
+                statusRunning: "JUEGO EN EJECUCIÓN",
+                btnVR: "Iniciar en Realidad Virtual",
+                descVR: "Inyecta UEVR automáticamente",
+                btnFlat: "Jugar Original (Flat)",
+                descFlat: "Inicia el juego base sin mods",
+                btnCancel: "Cancelar",
+                vrStarting: "Iniciando juego e inyectando motor...",
+                vrWarning: '⚠️ <strong class="text-white">No cierres esta ventana</strong> pues es la encargada de ejecutar el juego en VR.',
+                errorTitle: "No se pudo iniciar",
+                errorDetail: "Detalle del Error",
+                errorHint: "Sugerencia",
+                errorBack: "Volver al Menú",
+                flatStarting: "Iniciando juego base...",
+                vrPlaying: "SB:VR Jugando ahora",
+                errorStatus: "ERROR DETECTADO",
+                errorDefaultMsg: "Ocurrió un error desconocido al intentar abrir el juego.",
+                errorDefaultHint: "Verifica que el juego y los archivos estén correctamente ubicados."
+            },
+            en: {
+                statusSelect: "Select game mode",
+                statusVR: "VIRTUAL REALITY MODE",
+                statusFlat: "ORIGINAL MODE (FLAT)",
+                statusRunning: "GAME RUNNING",
+                btnVR: "Launch in Virtual Reality",
+                descVR: "Injects UEVR automatically",
+                btnFlat: "Play Original (Flat)",
+                descFlat: "Starts base game without mods",
+                btnCancel: "Cancel",
+                vrStarting: "Starting game and injecting engine...",
+                vrWarning: '⚠️ <strong class="text-white">Do not close this window</strong> as it handles the VR execution.',
+                errorTitle: "Could not start",
+                errorDetail: "Error Detail",
+                errorHint: "Suggestion",
+                errorBack: "Back to Menu",
+                flatStarting: "Starting base game...",
+                vrPlaying: "SB:VR Playing now",
+                errorStatus: "ERROR DETECTED",
+                errorDefaultMsg: "An unknown error occurred while trying to open the game.",
+                errorDefaultHint: "Verify that the game and files are correctly located."
+            }
+        };
+
+        function applyTranslations() {
+            const lang = translations[currentLang] || translations['es'];
+            
+            document.getElementById('status-text').textContent = lang.statusSelect;
+            document.getElementById('btn-vr-title').textContent = lang.btnVR;
+            document.getElementById('btn-vr-desc').textContent = lang.descVR;
+            document.getElementById('btn-flat-title').textContent = lang.btnFlat;
+            document.getElementById('btn-flat-desc').textContent = lang.descFlat;
+            document.getElementById('btn-cancel').textContent = lang.btnCancel;
+            
+            document.getElementById('vr-status-text').textContent = lang.vrStarting;
+            document.getElementById('vr-warning-text').innerHTML = lang.vrWarning;
+            
+            document.getElementById('error-title').textContent = lang.errorTitle;
+            document.getElementById('error-detail-label').textContent = lang.errorDetail;
+            document.getElementById('error-hint-label').textContent = lang.errorHint;
+            document.getElementById('btn-error-back').textContent = lang.errorBack;
+            
+            document.documentElement.lang = currentLang;
+        }
+
+        // Obtener idioma desde Python al iniciar
+        window.addEventListener("pywebviewready", async function() {
+            if (window.pywebview && window.pywebview.api) {
+                currentLang = await window.pywebview.api.get_language();
+                if (currentLang !== 'es' && currentLang !== 'en') currentLang = 'es';
+                applyTranslations();
+            }
+        });
+
+        // Aplicar por defecto porsiacaso la página carga antes que pywebview
+        document.addEventListener('DOMContentLoaded', applyTranslations);
+
+
+        // ── Drag ──────────────────────────────────────────────────────────────
+        document.addEventListener('mousedown', function (e) {
+            if (e.button !== 0) return;                          
+            if (e.target.closest('button, a, input, select')) return; 
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.start_drag();               
+            }
+        });
+
+        // ── Acciones ─────────────────────────────────────────────────────────
+        function closeApp() {
+            if (window.pywebview) window.pywebview.api.close_app();
+        }
+
+        async function launchGame(mode) {
+            const lang = translations[currentLang];
+            const mainMenu   = document.getElementById('main-menu');
+            const loadingVr  = document.getElementById('loading-vr');
+            const statusText = document.getElementById('status-text');
+            const vrStatusText = document.getElementById('vr-status-text');
+
+            mainMenu.classList.add('hidden');
+
+            if (mode === 'vr') {
+                statusText.textContent = lang.statusVR;
+                vrStatusText.textContent = lang.vrStarting;
+                loadingVr.classList.remove('hidden');
+                loadingVr.classList.add('flex');
+
+                if (window.pywebview) {
+                    const result = await window.pywebview.api.launch_vr();
+                    if (result.status === "error") { 
+                        showErrorState(result.message, result.hint);
+                    }
+                    else showVRPlayingState();
+                } else {
+                    setTimeout(() => { vrStatusText.textContent = "Detectando PID..."; }, 1500);
+                    setTimeout(showVRPlayingState, 3000);
+                }
+
+            } else if (mode === 'flat') {
+                statusText.textContent = lang.statusFlat;
+                loadingVr.classList.remove('hidden');
+                loadingVr.classList.add('flex');
+
+                const pulseRing = document.querySelector('.pulse-ring');
+                if (pulseRing) pulseRing.className = "absolute w-40 h-40 bg-blue-500/20 rounded-full blur-2xl animate-pulse";
+
+                const mainIcon = document.querySelector('.relative.z-10 i[data-lucide="headset"]');
+                if (mainIcon) { mainIcon.setAttribute('data-lucide','monitor-play'); mainIcon.className = "w-16 h-16 text-blue-200"; }
+
+                const sc = document.getElementById('vr-status-container');
+                if (sc) sc.className = "flex items-center gap-2 text-blue-300 font-medium bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20";
+
+                vrStatusText.textContent = lang.flatStarting;
+                lucide.createIcons();
+
+                if (window.pywebview) {
+                    const result = await window.pywebview.api.launch_flat();
+                    if (result.status === "error") { 
+                        showErrorState(result.message, result.hint);
+                    } else {
+                        showVRPlayingState();
+                    }
+                }
+            }
+        }
+
+        function showVRPlayingState() {
+            const lang = translations[currentLang];
+            const vrStatusText = document.getElementById('vr-status-text');
+            const vrSpinner    = document.getElementById('vr-spinner');
+            const vrWarning    = document.getElementById('vr-warning-text');
+            const statusText   = document.getElementById('status-text');
+            const pulseRing    = document.querySelector('.pulse-ring');
+            const mainIcon     = document.querySelector('.relative.z-10 i[data-lucide="headset"]');
+            const sc           = document.getElementById('vr-status-container');
+
+            statusText.textContent = lang.statusRunning;
+            vrStatusText.textContent = lang.vrPlaying;
+
+            if (sc) sc.className = "flex items-center gap-2 text-green-300 font-medium bg-green-500/10 px-6 py-2.5 rounded-full border border-green-500/30 shadow-[0_0_15px_rgba(74,222,128,0.2)] fade-in";
+            if (vrSpinner) { vrSpinner.setAttribute('data-lucide','gamepad-2'); vrSpinner.classList.remove('animate-spin'); }
+            if (pulseRing) pulseRing.className = "absolute w-40 h-40 bg-green-500/30 rounded-full blur-2xl pulse-ring";
+            if (mainIcon)  mainIcon.classList.replace('text-purple-200','text-green-300');
+            if (vrWarning) { vrWarning.classList.remove('hidden'); vrWarning.classList.add('block'); }
+
+            lucide.createIcons();
+        }
+
+        function showErrorState(message, hint) {
+            const lang = translations[currentLang];
+            const loadingVr = document.getElementById('loading-vr');
+            const errorView = document.getElementById('error-view');
+            const statusText = document.getElementById('status-text');
+            
+            loadingVr.classList.add('hidden');
+            loadingVr.classList.remove('flex');
+
+            errorView.classList.remove('hidden');
+            errorView.classList.add('flex');
+
+            statusText.textContent = lang.errorStatus;
+            
+            document.getElementById('error-message').textContent = message || lang.errorDefaultMsg;
+            document.getElementById('error-hint').textContent = hint || lang.errorDefaultHint;
+
+            lucide.createIcons();
+        }
+
+        function resetUI() {
+            const lang = translations[currentLang];
+            const mainMenu  = document.getElementById('main-menu');
+            const loadingVr = document.getElementById('loading-vr');
+            const errorView = document.getElementById('error-view');
+
+            mainMenu.classList.remove('hidden');
+            
+            loadingVr.classList.add('hidden');
+            loadingVr.classList.remove('flex');
+            errorView.classList.add('hidden');
+            errorView.classList.remove('flex');
+
+            document.getElementById('status-text').textContent = lang.statusSelect;
+            
+            const mainIcon = document.querySelector('.relative.z-10 i[data-lucide="monitor-play"]');
+            if(mainIcon) {
+                mainIcon.setAttribute('data-lucide','headset');
+                mainIcon.className = "w-16 h-16 text-purple-200";
+            }
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instalador SBVR</title>
+    <!-- Fuente Inter y JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Íconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Variables de estilo base */
+        :root {
+            --glass-bg: rgba(10, 10, 15, 0.4);
+            --glass-blur: blur(50px);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --white-hover: rgba(255, 255, 255, 0.1);
+            --white-light: rgba(255, 255, 255, 0.05);
+            --accent-purple: #a855f7;
+            --terminal-green: #22c55e;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            color: white;
+            overflow: hidden;
+            user-select: none;
+            font-size: 14px;
+        }
+
+        /* --- SPLASH SCREEN TERMINAL & GLITCH --- */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background-color: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            transition: opacity 0.3s;
+        }
+
+        .terminal-content {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .term-title {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 0.5rem;
+            position: relative;
+            letter-spacing: 2px;
+            display: inline-block;
+        }
+
+        .term-bar {
+            color: var(--accent-purple);
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin-top: 1rem;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+
+        .glitch-active { animation: glitchEffect 0.4s infinite; }
+        
+        .glitch-active .term-title::before,
+        .glitch-active .term-title::after {
+            content: 'FNAF: SBVR';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+        }
+        .glitch-active .term-title::before {
+            left: 4px;
+            text-shadow: -2px 0 red;
+            animation: glitch-anim-1 0.2s infinite linear alternate-reverse;
+        }
+        .glitch-active .term-title::after {
+            left: -4px;
+            text-shadow: -2px 0 cyan;
+            animation: glitch-anim-2 0.3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitchEffect {
+            0% { transform: translate(0) skew(0deg); filter: hue-rotate(0deg); }
+            20% { transform: translate(-5px, 5px) skew(-5deg); filter: invert(0.2); }
+            40% { transform: translate(5px, -5px) skew(5deg); filter: invert(0); }
+            60% { transform: translate(-5px, -5px) skew(-2deg); filter: hue-rotate(90deg); }
+            80% { transform: translate(5px, 5px) skew(2deg); filter: invert(0.1); }
+            100% { transform: translate(0) skew(0deg); filter: hue-rotate(0deg); }
+        }
+        @keyframes glitch-anim-1 {
+            0% { clip-path: inset(20% 0 80% 0); }
+            50% { clip-path: inset(60% 0 10% 0); }
+            100% { clip-path: inset(10% 0 50% 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip-path: inset(10% 0 60% 0); }
+            50% { clip-path: inset(30% 0 20% 0); }
+            100% { clip-path: inset(80% 0 5% 0); }
+        }
+
+        /* Video de fondo */
+        .bg-container {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: #050505;
+        }
+        #bg-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        .main-content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        /* Ventana Flexible y Contenedor de Deslizamiento */
+        .glass-window {
+            width: 100%;           
+            max-width: 1100px;
+            height: 550px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;   
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+            position: relative; /* Clave para el slide */
+            box-sizing: border-box;
+            overflow: hidden; /* Oculta lo que está fuera (derecha/izquierda) */
+        }
+
+        /* Lógica del Carrusel (Slide Horizontal) */
+        .step {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+            
+            /* Animación de deslizamiento principal */
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            pointer-events: none; /* Evita interacciones con paneles ocultos */
+        }
+
+        /* Estados de posición */
+        .step.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+        .step.past { /* Se fue hacia la izquierda */
+            opacity: 0;
+            transform: translateX(-50%); /* Menos desplazamiento para efecto parallax suave */
+        }
+        .step.future { /* Viene desde la derecha */
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        /* --- COLUMNAS INTERNAS --- */
+        .step-left {
+            width: 35%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .step-right {
+            width: 65%;
+            height: 100%;
+            padding: 0 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        /* --- ANIMACIONES DE ENTRADA (ESTÁTICAS AL TERMINAR) --- */
+        
+        /* 1. Íconos Izquierdos */
+        .step .step-left .icon-anim {
+            opacity: 0;
+            transform: scale(0.5) translateY(20px);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition-delay: 0.1s;
+            filter: drop-shadow(0 0 0 rgba(255,255,255,0));
+        }
+
+        .step.active .step-left .icon-anim {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            filter: drop-shadow(0 0 25px rgba(255,255,255,0.4));
+        }
+
+        /* 2. Textos y Elementos Derechos (Efecto Cascada) */
+        .step .step-right > * {
+            opacity: 0;
+            transform: translateX(30px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .step.active .step-right > * {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Retrasos para la cascada */
+        .step.active .step-right > *:nth-child(1) { transition-delay: 0.2s; }
+        .step.active .step-right > *:nth-child(2) { transition-delay: 0.3s; }
+        .step.active .step-right > *:nth-child(3) { transition-delay: 0.4s; }
+        .step.active .step-right > *:nth-child(4) { transition-delay: 0.5s; }
+        .step.active .step-right > *:nth-child(5) { transition-delay: 0.6s; }
+
+        /* Tipografía y Elementos Base */
+        h1, h2 { margin: 0; font-weight: 700; line-height: 1.2; }
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; } 
+        h2 { font-size: 1.8rem; } 
+        p { margin: 0; color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; line-height: 1.6; }
+        
+        .huge-icon {
+            width: 72px;
+            height: 72px;
+            color: white;
+        }
+
+        .icon-wrapper {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button { cursor: pointer; border: none; outline: none; font-family: inherit; }
+
+        .lang-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .btn-lang {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            background: var(--white-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-lang:hover {
+            background: var(--white-hover);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.5);
+        }
+
+        .btn-lang span.emoji { font-size: 3rem; }
+        .btn-lang span.text { font-size: 1.2rem; font-weight: 600; }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 1rem 2.5rem;
+            background: white;
+            color: black;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            transition: all 0.3s;
+            margin-top: 2rem;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.8rem 1.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+            text-decoration: none;
+            margin-top: 1.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .highlight-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            margin-top: 1.5rem;
+            width: 100%;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+        }
+
+        code.big-code {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 1.5rem;
+            word-break: break-all;
+        }
+
+        /* --- BARRA DE NAVEGACIÓN ESTÁTICA --- */
+        .bottom-nav {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 3rem;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+            pointer-events: none;
+            flex-shrink: 0;
+        }
+
+        .bottom-nav.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .nav-btn {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 0.8rem;
+            border-radius: 50%;
+            display: flex;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            color: white;
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.1);
+        }
+        .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        .dots { display: flex; gap: 1rem; }
+        .dot {
+            height: 0.6rem;
+            width: 0.6rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+            transition: all 0.4s ease;
+        }
+        .dot.active { width: 2.5rem; background: white; }
+
+        /* Estilos de la interfaz de descarga */
+        .download-ui { width: 100%; max-width: 500px; margin-top: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        .progress-wrapper { 
+            display: none; 
+            width: 100%; 
+            flex-direction: column; 
+            gap: 1rem; 
+            opacity: 0; 
+            transition: opacity 0.4s ease;
+        }
+        .progress-bar-container { width: 100%; height: 16px; background: rgba(0, 0, 0, 0.5); border-radius: 999px; overflow: hidden; border: 1px solid var(--glass-border); }
+        .progress-bar-fill { 
+            height: 100%; 
+            width: 0%; 
+            background: linear-gradient(90deg, #a855f7, #c084fc); 
+            border-radius: 999px; 
+            transition: width 0.1s linear, background-color 0.5s ease, box-shadow 0.5s ease; 
+        }
+        .progress-text { display: flex; justify-content: space-between; font-size: 1rem; font-weight: 600; }
+        
+        #download-btn { transition: opacity 0.3s ease, transform 0.3s; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen Tipo Terminal -->
+    <div id="splash-screen">
+        <div class="terminal-content">
+            <h1 class="term-title">FNAF: SBVR</h1>
+            <p class="term-bar" id="term-bar">[....................]</p>
+        </div>
+    </div>
+
+    <!-- Fondo de Video -->
+    <div class="bg-container">
+        <video id="bg-video" autoPlay loop muted playsInline>
+            <source src="backvideo.mp4" type="video/mp4" />
+        </video>
+        <div class="bg-overlay"></div>
+    </div>
+
+    <div class="main-content">
+        <!-- Ventana Central -->
+        <div class="glass-window">
+            
+            <!-- PASO 0: Idioma -->
+            <div id="step-0" class="step active">
+                <div class="step-left">
+                    <i data-lucide="globe-2" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
+                </div>
+                <div class="step-right">
+                    <h1>Select Language</h1>
+                    <p>Selecciona tu idioma / Choose your language</p>
+                    
+                    <div class="lang-grid">
+                        <button class="btn-lang" onclick="selectLanguage('es')">
+                            <span class="emoji">🇪🇸</span>
+                            <span class="text">Español</span>
+                        </button>
+                        <button class="btn-lang" onclick="selectLanguage('en')">
+                            <span class="emoji">🇺🇸</span>
+                            <span class="text">English</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 1: Características -->
+            <div id="step-1" class="step future">
+                <div class="step-left">
+                    <div class="icon-wrapper icon-anim">
+                        <i data-lucide="settings-2" style="width: 64px; height: 64px; color: white;"></i>
+                    </div>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="featuresTitle">Características del Mod</h1>
+                    <p data-i18n="welcome">Bienvenido a SBVR</p>
+
+                    <div class="highlight-box" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i data-lucide="crosshair" style="color: white; opacity: 0.8;"></i> <span data-i18n="feat1">Movimiento 6DOF completo</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i data-lucide="box" style="color: white; opacity: 0.8;"></i> <span data-i18n="feat2">Compatibilidad con OpenXR (Oculus, etc.)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i data-lucide="monitor" style="color: white; opacity: 0.8;"></i> <span data-i18n="feat3">Exclusivo para entornos Windows</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 2: Créditos -->
+            <div id="step-2" class="step future">
+                <div class="step-left">
+                    <div class="icon-wrapper icon-anim">
+                        <i data-lucide="users" style="width: 64px; height: 64px; color: white;"></i>
+                    </div>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="creditsTitle">Créditos de la Comunidad</h1>
+                    <p data-i18n="creditsDesc">Este proyecto es posible gracias al trabajo de la comunidad de desarrolladores VR.</p>
+
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; width: 100%;">
+                        <div class="highlight-box" style="margin-top: 0;">
+                            <h2 style="font-size: 1.5rem;">MagaBG</h2>
+                            <p data-i18n="credMagaBG" style="margin-top: 0.5rem;">Ajustes de perfiles de movimiento.</p>
+                        </div>
+                        <div class="highlight-box" style="margin-top: 0;">
+                            <h2 style="font-size: 1.5rem;">UEVR</h2>
+                            <p data-i18n="credUEVR" style="margin-top: 0.5rem;">Motor base de inyección VR.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 3: Aviso Legal -->
+            <div id="step-3" class="step future">
+                <div class="step-left">
+                    <div class="icon-wrapper icon-anim">
+                        <i data-lucide="scale" style="width: 64px; height: 64px; color: white;"></i>
+                    </div>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="legalTitle">Aviso Legal</h1>
+                    
+                    <div class="highlight-box">
+                        <p data-i18n="legalDesc" style="font-size: 1.1rem; line-height: 1.8; color: rgba(255,255,255,0.85);">
+                            Este mod es un proyecto de fans sin fines de lucro. No pretende infringir derechos de autor de ninguna manera. FNaF, Security Breach y todos sus personajes y recursos son propiedad intelectual exclusiva de Scott Cawthon y Steel Wool Studios.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 4: Guía Parte 1 -->
+            <div id="step-4" class="step future">
+                <div class="step-left">
+                    <i data-lucide="gamepad-2" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="step1Title">Paso 1: El Juego Base</h1>
+                    <p data-i18n="step1" style="margin-top: 1rem;">Asegúrate de tener el juego original instalado en tu equipo. Si aún no lo posees, puedes adquirirlo oficialmente.</p>
+                    
+                    <a href="https://store.steampowered.com/app/747660/Five_Nights_at_Freddys_Security_Breach/" target="_blank" class="btn-secondary">
+                        <i data-lucide="external-link" style="width: 20px; height: 20px;"></i>
+                        <span data-i18n="step1Link">Obtener en Steam</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- PASO 5: Guía Parte 2 -->
+            <div id="step-5" class="step future">
+                <div class="step-left">
+                    <i data-lucide="folder-search" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="step2Title">Paso 2: Ruta de instalación</h1>
+                    <p data-i18n="step2" style="margin-top: 1rem;">Localiza el directorio donde se instaló el juego. Por defecto, en la mayoría de sistemas se encuentra en:</p>
+                    <code class="big-code">C:\Program Files (x86)\Steam\steamapps\common</code>
+                </div>
+            </div>
+
+            <!-- PASO 6: Guía Parte 3 -->
+            <div id="step-6" class="step future">
+                <div class="step-left">
+                    <i data-lucide="folder-check" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="step3Title">Paso 3: Directorio correcto</h1>
+                    <p data-i18n="step3" style="margin-top: 1rem;">En el instalador que descargarás en breve, asegúrate de seleccionar ÚNICAMENTE la carpeta nombrada exactamente de esta manera:</p>
+                    <code class="big-code" style="font-weight: bold; border-color: rgba(255,255,255,0.4);">Five Nights at Freddys Security Breach</code>
+                </div>
+            </div>
+
+            <!-- PASO 7: Advertencia Neutral -->
+            <div id="step-7" class="step future">
+                <div class="step-left">
+                    <div class="icon-wrapper icon-anim">
+                        <i data-lucide="alert-triangle" style="width: 64px; height: 64px; color: #fbbf24;"></i>
+                    </div>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="launcherTitle">Advertencia Importante</h1>
+                    <p data-i18n="launcherDesc" style="margin-top: 1rem;">Al finalizar la instalación, el sistema creará un acceso directo dedicado en tu escritorio.</p>
+                    
+                    <div class="highlight-box">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                            <i data-lucide="arrow-right-circle" style="width: 28px; height: 28px; color: #fbbf24; flex-shrink: 0;"></i>
+                            <p data-i18n="launcherWarn1" style="color: white; font-weight: 500;">Debes iniciar el juego SIEMPRE utilizando este nuevo Launcher VR.</p>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                            <i data-lucide="info" style="width: 28px; height: 28px; color: white; opacity: 0.6; flex-shrink: 0;"></i>
+                            <p data-i18n="launcherWarn2" style="color: rgba(255,255,255,0.7);">Si ejecutas el juego directamente desde Steam, el modo de realidad virtual no se inicializará.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 8: Descarga -->
+            <div id="step-8" class="step future">
+                <div class="step-left">
+                    <i data-lucide="download" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="downloadTitle">Descargar Instalador</h1>
+                    <p data-i18n="downloadDesc" style="margin-top: 1rem;">Haz clic en el botón inferior para proceder con la descarga del archivo ejecutable (.exe).</p>
+
+                    <div class="download-ui">
+                        <button id="download-btn" class="btn-primary" style="width: 100%;" onclick="startDownload()">
+                            <i data-lucide="download" style="width: 24px; height: 24px;"></i>
+                            <span data-i18n="btnDownload">Descargar .exe</span>
+                        </button>
+
+                        <div id="progress-container" class="progress-wrapper">
+                            <div class="progress-text">
+                                <span id="progress-status" data-i18n="downloading">Iniciando descarga...</span>
+                                <span id="progress-percent">0%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div id="progress-bar" class="progress-bar-fill"></div>
+                            </div>
+                            <p data-i18n="adminWarn" style="font-size: 0.95rem; margin-top: 0.5rem; color: rgba(255,255,255,0.5);">
+                                Nota: El instalador requerirá permisos de Administrador para aplicar los parches.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 9: Pantalla Final -->
+            <div id="step-9" class="step future">
+                <div class="step-left">
+                    <i data-lucide="check-circle-2" class="huge-icon icon-anim" style="width: 100px; height: 100px; color: #22c55e;"></i>
+                </div>
+                <div class="step-right">
+                    <h1 data-i18n="finalTitle">¡Todo listo!</h1>
+                    <p data-i18n="finalDesc" style="margin-top: 1rem; font-size: 1.1rem;">El archivo se ha descargado correctamente.</p>
+
+                    <div class="highlight-box" style="background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3);">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                            <i data-lucide="shield-check" style="width: 28px; height: 28px; color: #22c55e; flex-shrink: 0;"></i>
+                            <p data-i18n="finalWarn" style="color: white; font-weight: 500;">Ejecuta el archivo descargado. Te pedirá permisos de administrador para instalar los parches necesarios.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra de Navegación Inferior Estática -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <button class="nav-btn" id="btn-prev" onclick="prevStep()">
+                <i data-lucide="chevron-left" style="width: 32px; height: 32px;"></i>
+            </button>
+            
+            <div class="dots" id="dots-container">
+                <!-- Se llenan por JS -->
+            </div>
+
+            <button class="nav-btn" id="btn-next" onclick="nextStep()">
+                <i data-lucide="chevron-right" style="width: 32px; height: 32px;"></i>
+            </button>
+        </nav>
+
+    </div>
+
+    <script>
+        const DICTIONARY = {
+            es: {
+                welcome: "Bienvenido a SBVR",
+                featuresTitle: "Características del Mod",
+                feat1: "Movimiento 6DOF completo",
+                feat2: "Compatibilidad con OpenXR (Oculus, etc.)",
+                feat3: "Exclusivo para entornos Windows",
+                creditsTitle: "Créditos de la Comunidad",
+                creditsDesc: "Este proyecto es posible gracias al trabajo de la comunidad de desarrolladores VR.",
+                credMagaBG: "Ajustes de perfiles de movimiento.",
+                credUEVR: "Motor base de inyección VR.",
+                legalTitle: "Aviso Legal",
+                legalDesc: "Este mod es un proyecto de fans sin fines de lucro. No pretende infringir derechos de autor de ninguna manera. FNaF, Security Breach y todos sus personajes y recursos son propiedad intelectual exclusiva de Scott Cawthon y Steel Wool Studios.",
+                step1Title: "Paso 1: El Juego Base",
+                step1: "Asegúrate de tener el juego original instalado en tu equipo. Si aún no lo posees, puedes adquirirlo oficialmente.",
+                step1Link: "Obtener en Steam",
+                step2Title: "Paso 2: Ruta de instalación",
+                step2: "Localiza el directorio donde se instaló el juego. Por defecto, en la mayoría de sistemas se encuentra en:",
+                step3Title: "Paso 3: Directorio correcto",
+                step3: "En el instalador que descargarás en breve, asegúrate de seleccionar ÚNICAMENTE la carpeta nombrada exactamente de esta manera:",
+                launcherTitle: "Advertencia Importante",
+                launcherDesc: "Al finalizar la instalación, el sistema creará un acceso directo dedicado en tu escritorio.",
+                launcherWarn1: "Debes iniciar el juego SIEMPRE utilizando este nuevo Launcher VR.",
+                launcherWarn2: "Si ejecutas el juego directamente desde la biblioteca de Steam, el modo de realidad virtual no se inicializará.",
+                downloadTitle: "Descargar Instalador",
+                downloadDesc: "Haz clic en el botón inferior para proceder con la descarga del archivo ejecutable (.exe).",
+                adminWarn: "Nota: El instalador requerirá permisos de Administrador para aplicar los parches.",
+                btnDownload: "Descargar .exe",
+                downloading: "Descargando el archivo...",
+                ready: "¡Descarga completada con éxito!",
+                finalTitle: "¡Todo listo!",
+                finalDesc: "El archivo SBVR_Installer.exe se ha descargado correctamente.",
+                finalWarn: "Ejecuta el archivo recién descargado. Te pedirá permisos de administrador para poder instalar los parches necesarios."
+            },
+            en: {
+                welcome: "Welcome to SBVR",
+                featuresTitle: "Mod Features",
+                feat1: "Full 6DOF Movement",
+                feat2: "OpenXR Compatibility (Oculus, etc.)",
+                feat3: "Exclusive to Windows environments",
+                creditsTitle: "Community Credits",
+                creditsDesc: "This project is made possible by the hard work of the VR developer community.",
+                credMagaBG: "Movement profile adjustments.",
+                credUEVR: "Base VR injection engine.",
+                legalTitle: "Legal Disclaimer",
+                legalDesc: "This mod is a non-profit fan project. No copyright infringement is intended in any way. FNaF, Security Breach, and all its characters and assets are the exclusive intellectual property of Scott Cawthon and Steel Wool Studios.",
+                step1Title: "Step 1: Base Game",
+                step1: "Make sure you have the original game installed on your system. If you don't own it yet, you can purchase it officially.",
+                step1Link: "Get it on Steam",
+                step2Title: "Step 2: Install Path",
+                step2: "Locate the directory where the game was installed. By default, on most systems it is found at:",
+                step3Title: "Step 3: Correct Directory",
+                step3: "In the installer you will download shortly, make sure to select ONLY the folder named exactly like this:",
+                launcherTitle: "Important Warning",
+                launcherDesc: "Upon completing the installation, the system will create a dedicated shortcut on your desktop.",
+                launcherWarn1: "You must ALWAYS start the game using this new VR Launcher.",
+                launcherWarn2: "If you launch the game directly from your Steam library, the virtual reality mode will not initialize.",
+                downloadTitle: "Download Installer",
+                downloadDesc: "Click the button below to proceed with downloading the executable file (.exe).",
+                adminWarn: "Note: The installer will require Administrator permissions to apply the patches.",
+                btnDownload: "Download .exe",
+                downloading: "Downloading file...",
+                ready: "Download completed successfully!",
+                finalTitle: "All set!",
+                finalDesc: "The SBVR_Installer.exe file has been downloaded successfully.",
+                finalWarn: "Run the newly downloaded file. It will ask for administrator permissions to install the necessary patches."
+            }
+        };
+
+        let currentStep = 0;
+        const totalSteps = 9;
+        let currentLang = 'es';
+        let isDownloading = false;
+
+        lucide.createIcons();
+
+        // Lógica de carga de Terminal ASCII -> Efecto Glitch
+        window.addEventListener('load', () => {
+            const barEl = document.getElementById('term-bar');
+            const splashEl = document.getElementById('splash-screen');
+            
+            let progress = 0;
+            const totalBars = 20;
+
+            const bootInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 15) + 5; 
+                if (progress > 100) progress = 100;
+
+                const filled = Math.floor((progress / 100) * totalBars);
+                const empty = totalBars - filled;
+                
+                barEl.textContent = '[' + '|'.repeat(filled) + '.'.repeat(empty) + ']';
+
+                if (progress >= 100) {
+                    clearInterval(bootInterval);
+                    
+                    setTimeout(() => {
+                        splashEl.classList.add('glitch-active');
+                        
+                        setTimeout(() => {
+                            splashEl.style.opacity = '0';
+                            setTimeout(() => {
+                                splashEl.style.display = 'none';
+                                const video = document.getElementById('bg-video');
+                                if(video) video.style.opacity = '1';
+                            }, 300);
+                        }, 500);
+                    }, 300);
+                }
+            }, 120);
+            
+            // Render inicial de pasos (garantizar estado correcto visual)
+            renderStep();
+        });
+
+        function createDots() {
+            const container = document.getElementById('dots-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= totalSteps; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.id = `dot-${i}`;
+                container.appendChild(dot);
+            }
+        }
+        createDots();
+
+        function selectLanguage(lang) {
+            currentLang = lang;
+            updateTexts();
+            nextStep();
+        }
+
+        function updateTexts() {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (DICTIONARY[currentLang][key]) {
+                    el.textContent = DICTIONARY[currentLang][key];
+                }
+            });
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                renderStep();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                renderStep();
+            }
+        }
+
+        function renderStep() {
+            // Manejo de clases para el Slider (past, active, future)
+            document.querySelectorAll('.step').forEach((el, index) => {
+                if (index < currentStep) {
+                    el.className = 'step past';
+                } else if (index === currentStep) {
+                    el.className = 'step active';
+                } else {
+                    el.className = 'step future';
+                }
+            });
+
+            // Visibilidad de la barra inferior
+            const bottomNav = document.getElementById('bottom-nav');
+            if (currentStep > 0) {
+                bottomNav.classList.add('visible');
+            } else {
+                bottomNav.classList.remove('visible');
+            }
+
+            // Actualizar Puntos
+            for (let i = 1; i <= totalSteps; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if (dot) {
+                    dot.classList.toggle('active', i === currentStep);
+                }
+            }
+
+            // Botones Anterior / Siguiente
+            document.getElementById('btn-prev').disabled = (currentStep === 1);
+            
+            const btnNext = document.getElementById('btn-next');
+            if (currentStep === 8 || currentStep === totalSteps) {
+                btnNext.disabled = true;
+                btnNext.style.opacity = '0';
+                btnNext.style.pointerEvents = 'none';
+            } else {
+                btnNext.disabled = false;
+                btnNext.style.opacity = '1';
+                btnNext.style.pointerEvents = 'auto';
+            }
+        }
+
+        // Descarga
+        function startDownload() {
+            if (isDownloading) return;
+            isDownloading = true;
+
+            const btn = document.getElementById('download-btn');
+            const progressWrapper = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const percentText = document.getElementById('progress-percent');
+            const statusText = document.getElementById('progress-status');
+
+            // Animación suave de transición de UI
+            btn.style.opacity = '0';
+            setTimeout(() => {
+                btn.style.display = 'none';
+                progressWrapper.style.display = 'flex';
+                
+                // Permitir que el display:flex renderice antes de cambiar la opacidad
+                requestAnimationFrame(() => {
+                    progressWrapper.style.opacity = '1';
+                });
+            }, 300);
+
+            statusText.textContent = DICTIONARY[currentLang].downloading;
+
+            let progress = 0;
+            // Un intervalo más rápido para que la animación se vea mucho más fluida
+            const downloadInterval = setInterval(() => {
+                progress += Math.random() * 3 + 1; // Incrementos más pequeños para suavidad
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(downloadInterval);
+                    finishDownload();
+                }
+                progressBar.style.width = `${progress}%`;
+                percentText.textContent = `${Math.floor(progress)}%`;
+            }, 60);
+        }
+
+        function finishDownload() {
+            const progressBar = document.getElementById('progress-bar');
+            const statusText = document.getElementById('progress-status');
+
+            // Efecto visual al completar
+            progressBar.style.background = 'linear-gradient(90deg, #22c55e, #4ade80)';
+            progressBar.style.boxShadow = '0 0 15px rgba(34, 197, 94, 0.5)';
+            statusText.textContent = DICTIONARY[currentLang].ready;
+            
+            setTimeout(() => {
+                // Descarga real apuntando al .exe proporcionado
+                const element = document.createElement("a");
+                element.href = "https://github.com/EllieWasteland/FNAF-SBVR-INSTALLER-Five-Nitghts-at-Freddys/releases/download/v1.0.0/SBVR_Installer.exe";
+                // Añadimos el atributo de descarga (aunque al ser de Github debería bajar directo por defecto)
+                element.setAttribute("download", "SBVR_Installer.exe");
+                
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+
+                // Avanzar al último paso automáticamente
+                setTimeout(() => {
+                    nextStep();
+                }, 1200); // Un pelín más de tiempo para que el usuario note el verde de la barra
+
+            }, 600);
+        }
+    </script>
+</body>
+</html>
