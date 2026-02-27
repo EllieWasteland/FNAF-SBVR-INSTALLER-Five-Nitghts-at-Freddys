@@ -106,7 +106,7 @@ def main():
     
     webview.create_window(
         title='FNAF: SBVR - Setup',
-        url='index.html',
+        url='SBVR_InstallerUI.html',
         js_api=api,
         width=1080,
         height=720,
