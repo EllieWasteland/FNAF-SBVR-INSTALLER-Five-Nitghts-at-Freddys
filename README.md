@@ -28,7 +28,7 @@ The automated installer (`SBVR_Installer.exe`) is available in the **[Releases](
 
 ## Credits
 This project is made possible by the hard work of the VR developer community:
-* **MagaBG:** For the configuration and fine-tuning of the movement profiles.
+* **MalaBG:** For the configuration and fine-tuning of the movement profiles.
 * **UEVR:** For providing the powerful base virtual reality injection engine.
 
 ## Legal Disclaimer
