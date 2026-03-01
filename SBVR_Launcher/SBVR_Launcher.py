@@ -10,8 +10,22 @@ import json
 from pyinjector import inject
 
 JUEGO_EJECUTABLE = "fnaf9-Win64-Shipping.exe"
-RUTA_UEVR_BACKEND = os.path.join("UEVR", "UEVRBackend.dll")
-RUTA_UEVR_LOADER  = os.path.join("UEVR", "openxr_loader.dll")
+
+def obtener_ruta_uevr(filename):
+    """Resuelve la ruta de los archivos de UEVR, compatible con auto-py-to-exe."""
+    if getattr(sys, 'frozen', False):
+        # 1. Buscar en la carpeta temporal _MEIPASS (si se incluyó en el .exe)
+        ruta_meipass = os.path.join(sys._MEIPASS, "UEVR", filename)
+        if os.path.exists(ruta_meipass):
+            return ruta_meipass
+        # 2. Buscar al lado del .exe (por si la carpeta UEVR se colocó externamente al lado)
+        return os.path.join(os.path.dirname(sys.executable), "UEVR", filename)
+    else:
+        # Modo desarrollo (ejecutando el .py directamente)
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), "UEVR", filename)
+
+RUTA_UEVR_BACKEND = obtener_ruta_uevr("UEVRBackend.dll")
+RUTA_UEVR_LOADER  = obtener_ruta_uevr("openxr_loader.dll")
 
 def obtener_pid(nombre_ejecutable):
     for proceso in psutil.process_iter(['pid', 'name']):
@@ -87,13 +101,29 @@ class LauncherAPI:
         process.wait()
         self.close_app()
 
+    def check_files(self):
+        is_en = self.lang == 'en'
+        
+        # Verificar ejecutable base
+        if not os.path.exists(JUEGO_EJECUTABLE):
+            msg = f"'{JUEGO_EJECUTABLE}' not found." if is_en else f"No se encontró '{JUEGO_EJECUTABLE}'."
+            hint = "Make sure the launcher is inside the game folder." if is_en else "Asegúrate de que el launcher esté en la misma carpeta que el juego."
+            return {"status": "error", "message": msg, "hint": hint}
+            
+        # Verificar UEVR backend
+        if not os.path.exists(RUTA_UEVR_BACKEND):
+            msg = "UEVRBackend.dll not found." if is_en else "No se encontró UEVRBackend.dll."
+            hint = "Make sure the 'UEVR' folder is included." if is_en else "Asegúrate de que la carpeta 'UEVR' esté incluida o junto al .exe."
+            return {"status": "error", "message": msg, "hint": hint}
+            
+        return {"status": "success"}
+
     def launch_vr(self):
-        # Traducciones para errores en Python
         is_en = self.lang == 'en'
         msg_err_open = f"Error opening game: {{}}" if is_en else f"Error al abrir el juego: {{}}"
         hint_err_open = f"Verify that '{JUEGO_EJECUTABLE}' is next to the launcher." if is_en else f"Verifica que el ejecutable '{JUEGO_EJECUTABLE}' esté junto al launcher."
         msg_no_uevr = "UEVRBackend.dll not found" if is_en else "No se encontró UEVRBackend.dll"
-        hint_no_uevr = "Make sure the 'UEVR' folder exists next to the launcher." if is_en else "Asegúrate de que la carpeta 'UEVR' exista junto al launcher."
+        hint_no_uevr = "Make sure the 'UEVR' folder is included." if is_en else "Asegúrate de que la carpeta 'UEVR' esté incluida o junto al .exe."
         msg_inject = "Injection error: {}" if is_en else "Error de inyección: {}"
         hint_inject = "Verify that your antivirus is not blocking the injection." if is_en else "Verifica que tu antivirus no esté bloqueando la inyección."
         msg_no_pid = "Could not detect game process." if is_en else "No se pudo detectar el proceso del juego."
@@ -104,13 +134,16 @@ class LauncherAPI:
         except Exception as e:
             return {"status": "error", "message": msg_err_open.format(e), "hint": hint_err_open}
 
-        time.sleep(2)
-        pid = obtener_pid(JUEGO_EJECUTABLE)
-        if not pid:
-            time.sleep(3)
+        pid = None
+        for _ in range(15):
+            time.sleep(1)
             pid = obtener_pid(JUEGO_EJECUTABLE)
+            if pid:
+                break
 
         if pid:
+            time.sleep(8)
+            
             try:
                 if os.path.exists(RUTA_UEVR_LOADER):
                     inject(pid, RUTA_UEVR_LOADER)
@@ -153,11 +186,11 @@ if __name__ == "__main__":
 
     os.chdir(exe_dir)
     
-    # Cargar lenguaje desde la configuración
+
     lenguaje_config = cargar_configuracion(exe_dir)
 
     api = LauncherAPI(lang=lenguaje_config)
-    html_path = os.path.join(base_dir, "SBVR_LauncherUI.html")
+    html_path = os.path.join(base_dir, "launcherUI.html")
 
     window = webview.create_window(
         title='FNAF9 VR Launcher',

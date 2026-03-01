@@ -6,6 +6,7 @@ import zipfile
 import subprocess
 import glob
 import json
+import win32com.client  # Importación añadida para crear el acceso directo
 
 def get_base_path():
     if hasattr(sys, '_MEIPASS'):
@@ -77,25 +78,21 @@ class InstallApi:
             with open(config_path, "w", encoding="utf-8") as json_file:
                 json.dump(config_data, json_file, indent=4)
 
+
             shortcut_path = os.path.join(self.desktop_path, "FNAF SBVR.lnk")
             
-            vbs_content = f"""Set ws = CreateObject("WScript.Shell")
-Set shortcut = ws.CreateShortcut("{shortcut_path}")
-shortcut.TargetPath = "{launcher_dest}"
-shortcut.WorkingDirectory = "{win64_path}"
-shortcut.Description = "FNAF: Security Breach VR"
-shortcut.Save"""
-            vbs_path = os.path.join(self.base_dir, "create_shortcut.vbs")
-            with open(vbs_path, "w", encoding="utf-8") as f:
-                f.write(vbs_content)
-            
-            subprocess.run(["cscript.exe", "//Nologo", vbs_path], creationflags=subprocess.CREATE_NO_WINDOW)
-            if os.path.exists(vbs_path):
-                os.remove(vbs_path)
+            shell = win32com.client.Dispatch("WScript.Shell")
+            shortcut = shell.CreateShortCut(shortcut_path)
+            shortcut.TargetPath = launcher_dest
+            shortcut.WorkingDirectory = win64_path
+            shortcut.Description = "FNAF: Security Breach VR"
+            shortcut.Save()
 
             return "success"
             
-        except Exception:
+        except Exception as e:
+            # Imprimir el error en consola puede ayudar a depurar si algo falla
+            print(f"Error durante la instalación: {e}")
             return "error"
 
     def close_app(self):
@@ -106,7 +103,7 @@ def main():
     
     webview.create_window(
         title='FNAF: SBVR - Setup',
-        url='SBVR_InstallerUI.html',
+        url='index.html',
         js_api=api,
         width=1080,
         height=720,

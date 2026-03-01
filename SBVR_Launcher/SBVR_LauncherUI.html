@@ -42,7 +42,7 @@
     </style>
 </head>
 
-<body class="draggable h-screen w-screen m-0 bg-[url('background.jpg')] bg-cover bg-center">
+<body class="draggable h-screen w-screen m-0 bg-[url('background.jpg')] bg-cover bg-center bg-gray-900">
 
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md z-0 pointer-events-none"></div>
 
@@ -57,11 +57,17 @@
             <!-- HEADER -->
             <div class="text-center mb-8 pointer-events-auto">
                 <h1 class="text-3xl font-bold text-white tracking-tight drop-shadow-lg">FNAF: SBVR</h1>
-                <p class="text-white/60 text-sm mt-1 font-medium tracking-widest uppercase" id="status-text">Selecciona el modo de juego</p>
+                <p class="text-white/60 text-sm mt-1 font-medium tracking-widest uppercase" id="status-text">Iniciando sistema...</p>
             </div>
 
-            <!-- VISTA 1: BOTONES -->
-            <div id="main-menu" class="w-full max-w-md flex flex-col gap-4 fade-in pointer-events-auto">
+            <!-- VISTA 0: COMPROBANDO ARCHIVOS -->
+            <div id="checking-view" class="w-full max-w-md flex flex-col items-center justify-center py-8 fade-in pointer-events-auto">
+                <i data-lucide="loader-2" class="w-12 h-12 text-purple-400/80 animate-spin mb-4"></i>
+                <h2 id="checking-text" class="text-white font-medium text-sm tracking-widest uppercase">VERIFICANDO ARCHIVOS...</h2>
+            </div>
+
+            <!-- VISTA 1: BOTONES (Oculto inicialmente) -->
+            <div id="main-menu" class="hidden w-full max-w-md flex-col gap-4 fade-in pointer-events-auto">
 
                 <button onclick="launchGame('vr')" class="group relative w-full p-5 rounded-2xl bg-white/5 border border-purple-500/30 hover:bg-purple-500/10 hover:border-purple-500/60 transition-all duration-300 flex items-center gap-5 cursor-pointer shadow-lg overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -91,7 +97,7 @@
                 </button>
             </div>
 
-            <!-- VISTA 2: ANIMACIÓN DE CARGA VR -->
+            <!-- VISTA 2: ANIMACIÓN DE CARGA VR/FLAT -->
             <div id="loading-vr" class="hidden w-full flex-col items-center justify-center py-6 fade-in pointer-events-auto">
                 <div class="relative flex items-center justify-center w-full h-32 mb-4">
                     <div class="absolute w-40 h-40 bg-purple-500/30 rounded-full blur-2xl pulse-ring"></div>
@@ -133,7 +139,7 @@
                     </div>
                 </div>
 
-                <button onclick="resetUI()" class="w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all duration-300 text-white font-medium cursor-pointer shadow-lg flex items-center justify-center gap-2">
+                <button onclick="resetUI()" id="btn-error-container" class="w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all duration-300 text-white font-medium cursor-pointer shadow-lg flex items-center justify-center gap-2">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                     <span id="btn-error-back">Volver al Menú</span>
                 </button>
@@ -154,6 +160,7 @@
                 statusVR: "MODO REALIDAD VIRTUAL",
                 statusFlat: "MODO ORIGINAL (FLAT)",
                 statusRunning: "JUEGO EN EJECUCIÓN",
+                checkingFiles: "VERIFICANDO ARCHIVOS...",
                 btnVR: "Iniciar en Realidad Virtual",
                 descVR: "Inyecta UEVR automáticamente",
                 btnFlat: "Jugar Original (Flat)",
@@ -165,6 +172,7 @@
                 errorDetail: "Detalle del Error",
                 errorHint: "Sugerencia",
                 errorBack: "Volver al Menú",
+                errorClose: "Cerrar Launcher",
                 flatStarting: "Iniciando juego base...",
                 vrPlaying: "SB:VR Jugando ahora",
                 errorStatus: "ERROR DETECTADO",
@@ -176,6 +184,7 @@
                 statusVR: "VIRTUAL REALITY MODE",
                 statusFlat: "ORIGINAL MODE (FLAT)",
                 statusRunning: "GAME RUNNING",
+                checkingFiles: "CHECKING FILES...",
                 btnVR: "Launch in Virtual Reality",
                 descVR: "Injects UEVR automatically",
                 btnFlat: "Play Original (Flat)",
@@ -187,6 +196,7 @@
                 errorDetail: "Error Detail",
                 errorHint: "Suggestion",
                 errorBack: "Back to Menu",
+                errorClose: "Close Launcher",
                 flatStarting: "Starting base game...",
                 vrPlaying: "SB:VR Playing now",
                 errorStatus: "ERROR DETECTED",
@@ -198,7 +208,7 @@
         function applyTranslations() {
             const lang = translations[currentLang] || translations['es'];
             
-            document.getElementById('status-text').textContent = lang.statusSelect;
+            document.getElementById('checking-text').textContent = lang.checkingFiles;
             document.getElementById('btn-vr-title').textContent = lang.btnVR;
             document.getElementById('btn-vr-desc').textContent = lang.descVR;
             document.getElementById('btn-flat-title').textContent = lang.btnFlat;
@@ -216,18 +226,44 @@
             document.documentElement.lang = currentLang;
         }
 
-        // Obtener idioma desde Python al iniciar
+        // ── Lógica de Inicio y Conexión con Python ───────────────────────────
         window.addEventListener("pywebviewready", async function() {
             if (window.pywebview && window.pywebview.api) {
                 currentLang = await window.pywebview.api.get_language();
                 if (currentLang !== 'es' && currentLang !== 'en') currentLang = 'es';
                 applyTranslations();
+
+                // Verificar que los archivos del juego/mod existen antes de avanzar
+                const checkResult = await window.pywebview.api.check_files();
+                
+                const checkingView = document.getElementById('checking-view');
+                checkingView.classList.add('hidden');
+                checkingView.classList.remove('flex');
+
+                if (checkResult.status === "success") {
+                    document.getElementById('status-text').textContent = translations[currentLang].statusSelect;
+                    const mainMenu = document.getElementById('main-menu');
+                    mainMenu.classList.remove('hidden');
+                    mainMenu.classList.add('flex');
+                } else {
+                    showInitialError(checkResult.message, checkResult.hint);
+                }
             }
         });
 
-        // Aplicar por defecto porsiacaso la página carga antes que pywebview
-        document.addEventListener('DOMContentLoaded', applyTranslations);
-
+        // Fallback visual por si se abre en el navegador web local sin python
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTranslations();
+            setTimeout(() => {
+                if (!window.pywebview) {
+                    document.getElementById('checking-view').classList.add('hidden');
+                    document.getElementById('checking-view').classList.remove('flex');
+                    document.getElementById('status-text').textContent = translations[currentLang].statusSelect;
+                    document.getElementById('main-menu').classList.remove('hidden');
+                    document.getElementById('main-menu').classList.add('flex');
+                }
+            }, 1500);
+        });
 
         // ── Drag ──────────────────────────────────────────────────────────────
         document.addEventListener('mousedown', function (e) {
@@ -251,6 +287,7 @@
             const vrStatusText = document.getElementById('vr-status-text');
 
             mainMenu.classList.add('hidden');
+            mainMenu.classList.remove('flex');
 
             if (mode === 'vr') {
                 statusText.textContent = lang.statusVR;
@@ -319,6 +356,23 @@
             lucide.createIcons();
         }
 
+        // Si falla la verificación inicial, muestra un botón de Cerrar en vez de Volver al Menú
+        function showInitialError(message, hint) {
+            showErrorState(message, hint);
+            const lang = translations[currentLang];
+            
+            const btnContainer = document.getElementById('btn-error-container');
+            btnContainer.setAttribute('onclick', 'closeApp()');
+            
+            const btnText = document.getElementById('btn-error-back');
+            btnText.textContent = lang.errorClose;
+            
+            const btnIcon = btnContainer.querySelector('i');
+            btnIcon.setAttribute('data-lucide', 'x');
+            
+            lucide.createIcons();
+        }
+
         function showErrorState(message, hint) {
             const lang = translations[currentLang];
             const loadingVr = document.getElementById('loading-vr');
@@ -339,6 +393,7 @@
             lucide.createIcons();
         }
 
+        // Para resetear al estado principal (en caso de error después de iniciar el juego)
         function resetUI() {
             const lang = translations[currentLang];
             const mainMenu  = document.getElementById('main-menu');
@@ -346,6 +401,7 @@
             const errorView = document.getElementById('error-view');
 
             mainMenu.classList.remove('hidden');
+            mainMenu.classList.add('flex');
             
             loadingVr.classList.add('hidden');
             loadingVr.classList.remove('flex');
