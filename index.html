@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instalador SBVR</title>
-    <!-- Fuente Inter y JetBrains Mono -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Íconos Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        /* Variables de estilo base */
         :root {
             --glass-bg: rgba(10, 10, 15, 0.4);
             --glass-blur: blur(50px);
@@ -34,7 +31,6 @@
             font-size: 14px;
         }
 
-        /* --- SPLASH SCREEN TERMINAL & GLITCH --- */
         #splash-screen {
             position: fixed;
             inset: 0;
@@ -114,7 +110,6 @@
             100% { clip-path: inset(80% 0 5% 0); }
         }
 
-        /* Video de fondo */
         .bg-container {
             position: absolute;
             inset: 0;
@@ -134,7 +129,6 @@
             background: rgba(0, 0, 0, 0.4);
         }
 
-        /* --- LAYOUT PRINCIPAL --- */
         .main-content {
             position: relative;
             z-index: 10;
@@ -148,7 +142,6 @@
             box-sizing: border-box;
         }
 
-        /* Ventana Flexible y Contenedor de Deslizamiento */
         .glass-window {
             width: 100%;           
             max-width: 1100px;
@@ -159,12 +152,11 @@
             border: 1px solid var(--glass-border);
             border-radius: 2rem;   
             box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
-            position: relative; /* Clave para el slide */
+            position: relative; 
             box-sizing: border-box;
-            overflow: hidden; /* Oculta lo que está fuera (derecha/izquierda) */
+            overflow: hidden; 
         }
 
-        /* Lógica del Carrusel (Slide Horizontal) */
         .step {
             position: absolute;
             top: 0;
@@ -178,28 +170,25 @@
             padding: 2rem;
             box-sizing: border-box;
             
-            /* Animación de deslizamiento principal */
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             opacity: 0;
-            pointer-events: none; /* Evita interacciones con paneles ocultos */
+            pointer-events: none; 
         }
 
-        /* Estados de posición */
         .step.active {
             opacity: 1;
             transform: translateX(0);
             pointer-events: auto;
         }
-        .step.past { /* Se fue hacia la izquierda */
+        .step.past { 
             opacity: 0;
-            transform: translateX(-50%); /* Menos desplazamiento para efecto parallax suave */
+            transform: translateX(-50%); 
         }
-        .step.future { /* Viene desde la derecha */
+        .step.future { 
             opacity: 0;
             transform: translateX(100%);
         }
 
-        /* --- COLUMNAS INTERNAS --- */
         .step-left {
             width: 35%;
             height: 100%;
@@ -220,9 +209,6 @@
             align-items: flex-start;
         }
 
-        /* --- ANIMACIONES DE ENTRADA (ESTÁTICAS AL TERMINAR) --- */
-        
-        /* 1. Íconos Izquierdos */
         .step .step-left .icon-anim {
             opacity: 0;
             transform: scale(0.5) translateY(20px);
@@ -237,7 +223,6 @@
             filter: drop-shadow(0 0 25px rgba(255,255,255,0.4));
         }
 
-        /* 2. Textos y Elementos Derechos (Efecto Cascada) */
         .step .step-right > * {
             opacity: 0;
             transform: translateX(30px);
@@ -249,14 +234,12 @@
             transform: translateX(0);
         }
 
-        /* Retrasos para la cascada */
         .step.active .step-right > *:nth-child(1) { transition-delay: 0.2s; }
         .step.active .step-right > *:nth-child(2) { transition-delay: 0.3s; }
         .step.active .step-right > *:nth-child(3) { transition-delay: 0.4s; }
         .step.active .step-right > *:nth-child(4) { transition-delay: 0.5s; }
         .step.active .step-right > *:nth-child(5) { transition-delay: 0.6s; }
 
-        /* Tipografía y Elementos Base */
         h1, h2 { margin: 0; font-weight: 700; line-height: 1.2; }
         h1 { font-size: 2.5rem; margin-bottom: 0.5rem; } 
         h2 { font-size: 1.8rem; } 
@@ -378,7 +361,6 @@
             word-break: break-all;
         }
 
-        /* --- BARRA DE NAVEGACIÓN ESTÁTICA --- */
         .bottom-nav {
             margin-top: 2rem;
             padding: 1rem 2rem;
@@ -432,7 +414,6 @@
         }
         .dot.active { width: 2.5rem; background: white; }
 
-        /* Estilos de la interfaz de descarga */
         .download-ui { width: 100%; max-width: 500px; margin-top: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
         .progress-wrapper { 
             display: none; 
@@ -458,7 +439,6 @@
 </head>
 <body>
 
-    <!-- Splash Screen Tipo Terminal -->
     <div id="splash-screen">
         <div class="terminal-content">
             <h1 class="term-title">FNAF: SBVR</h1>
@@ -466,7 +446,6 @@
         </div>
     </div>
 
-    <!-- Fondo de Video -->
     <div class="bg-container">
         <video id="bg-video" autoPlay loop muted playsInline>
             <source src="backvideo.mp4" type="video/mp4" />
@@ -475,10 +454,8 @@
     </div>
 
     <div class="main-content">
-        <!-- Ventana Central -->
         <div class="glass-window">
             
-            <!-- PASO 0: Idioma -->
             <div id="step-0" class="step active">
                 <div class="step-left">
                     <i data-lucide="globe-2" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
@@ -500,7 +477,6 @@
                 </div>
             </div>
 
-            <!-- PASO 1: Características -->
             <div id="step-1" class="step future">
                 <div class="step-left">
                     <div class="icon-wrapper icon-anim">
@@ -525,7 +501,6 @@
                 </div>
             </div>
 
-            <!-- PASO 2: Créditos -->
             <div id="step-2" class="step future">
                 <div class="step-left">
                     <div class="icon-wrapper icon-anim">
@@ -538,8 +513,8 @@
 
                     <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; width: 100%;">
                         <div class="highlight-box" style="margin-top: 0;">
-                            <h2 style="font-size: 1.5rem;">MagaBG</h2>
-                            <p data-i18n="credMagaBG" style="margin-top: 0.5rem;">Ajustes de perfiles de movimiento.</p>
+                            <h2 style="font-size: 1.5rem;">MalaBG</h2>
+                            <p data-i18n="credMalaBG" style="margin-top: 0.5rem;">Ajustes de perfiles de movimiento.</p>
                         </div>
                         <div class="highlight-box" style="margin-top: 0;">
                             <h2 style="font-size: 1.5rem;">UEVR</h2>
@@ -549,7 +524,6 @@
                 </div>
             </div>
 
-            <!-- PASO 3: Aviso Legal -->
             <div id="step-3" class="step future">
                 <div class="step-left">
                     <div class="icon-wrapper icon-anim">
@@ -567,7 +541,6 @@
                 </div>
             </div>
 
-            <!-- PASO 4: Guía Parte 1 -->
             <div id="step-4" class="step future">
                 <div class="step-left">
                     <i data-lucide="gamepad-2" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
@@ -583,31 +556,28 @@
                 </div>
             </div>
 
-            <!-- PASO 5: Guía Parte 2 -->
             <div id="step-5" class="step future">
                 <div class="step-left">
                     <i data-lucide="folder-search" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
                 </div>
                 <div class="step-right">
                     <h1 data-i18n="step2Title">Paso 2: Ruta de instalación</h1>
-                    <p data-i18n="step2" style="margin-top: 1rem;">Localiza el directorio donde se instaló el juego. Por defecto, en la mayoría de sistemas se encuentra en:</p>
+                    <p data-i18n="step2" style="margin-top: 1rem;">Localiza el directorio donde se instaló el juego. Por defecto, en la mayoría de sistemas se encuentra dentro de tu biblioteca de juegos en Steam:</p>
                     <code class="big-code">C:\Program Files (x86)\Steam\steamapps\common</code>
                 </div>
             </div>
 
-            <!-- PASO 6: Guía Parte 3 -->
             <div id="step-6" class="step future">
                 <div class="step-left">
                     <i data-lucide="folder-check" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
                 </div>
                 <div class="step-right">
                     <h1 data-i18n="step3Title">Paso 3: Directorio correcto</h1>
-                    <p data-i18n="step3" style="margin-top: 1rem;">En el instalador que descargarás en breve, asegúrate de seleccionar ÚNICAMENTE la carpeta nombrada exactamente de esta manera:</p>
-                    <code class="big-code" style="font-weight: bold; border-color: rgba(255,255,255,0.4);">Five Nights at Freddys Security Breach</code>
+                    <p data-i18n="step3" style="margin-top: 1rem;">En el instalador que descargarás en breve, asegúrate de seleccionar la carpeta base nombrada "quarters", o la carpeta que contiene el archivo ejecutable:</p>
+                    <code class="big-code" style="font-weight: bold; border-color: rgba(255,255,255,0.4);">quarters</code>
                 </div>
             </div>
 
-            <!-- PASO 7: Advertencia Neutral -->
             <div id="step-7" class="step future">
                 <div class="step-left">
                     <div class="icon-wrapper icon-anim">
@@ -631,7 +601,6 @@
                 </div>
             </div>
 
-            <!-- PASO 8: Descarga -->
             <div id="step-8" class="step future">
                 <div class="step-left">
                     <i data-lucide="download" class="huge-icon icon-anim" style="width: 100px; height: 100px;"></i>
@@ -662,7 +631,6 @@
                 </div>
             </div>
 
-            <!-- PASO 9: Pantalla Final -->
             <div id="step-9" class="step future">
                 <div class="step-left">
                     <i data-lucide="check-circle-2" class="huge-icon icon-anim" style="width: 100px; height: 100px; color: #22c55e;"></i>
@@ -682,15 +650,12 @@
 
         </div>
 
-        <!-- Barra de Navegación Inferior Estática -->
         <nav id="bottom-nav" class="bottom-nav">
             <button class="nav-btn" id="btn-prev" onclick="prevStep()">
                 <i data-lucide="chevron-left" style="width: 32px; height: 32px;"></i>
             </button>
             
-            <div class="dots" id="dots-container">
-                <!-- Se llenan por JS -->
-            </div>
+            <div class="dots" id="dots-container"></div>
 
             <button class="nav-btn" id="btn-next" onclick="nextStep()">
                 <i data-lucide="chevron-right" style="width: 32px; height: 32px;"></i>
@@ -709,7 +674,7 @@
                 feat3: "Exclusivo para entornos Windows",
                 creditsTitle: "Créditos de la Comunidad",
                 creditsDesc: "Este proyecto es posible gracias al trabajo de la comunidad de desarrolladores VR.",
-                credMagaBG: "Ajustes de perfiles de movimiento.",
+                credMalaBG: "Ajustes de perfiles de movimiento.",
                 credUEVR: "Motor base de inyección VR.",
                 legalTitle: "Aviso Legal",
                 legalDesc: "Este mod es un proyecto de fans sin fines de lucro. No pretende infringir derechos de autor de ninguna manera. FNaF, Security Breach y todos sus personajes y recursos son propiedad intelectual exclusiva de Scott Cawthon y Steel Wool Studios.",
@@ -717,9 +682,9 @@
                 step1: "Asegúrate de tener el juego original instalado en tu equipo. Si aún no lo posees, puedes adquirirlo oficialmente.",
                 step1Link: "Obtener en Steam",
                 step2Title: "Paso 2: Ruta de instalación",
-                step2: "Localiza el directorio donde se instaló el juego. Por defecto, en la mayoría de sistemas se encuentra en:",
+                step2: "Localiza el directorio donde se instaló el juego. Por defecto, en la mayoría de sistemas se encuentra dentro de tu biblioteca de juegos en Steam:",
                 step3Title: "Paso 3: Directorio correcto",
-                step3: "En el instalador que descargarás en breve, asegúrate de seleccionar ÚNICAMENTE la carpeta nombrada exactamente de esta manera:",
+                step3: "En el instalador que descargarás en breve, asegúrate de seleccionar la carpeta base nombrada \"quarters\", o la carpeta que contiene el archivo ejecutable:",
                 launcherTitle: "Advertencia Importante",
                 launcherDesc: "Al finalizar la instalación, el sistema creará un acceso directo dedicado en tu escritorio.",
                 launcherWarn1: "Debes iniciar el juego SIEMPRE utilizando este nuevo Launcher VR.",
@@ -742,7 +707,7 @@
                 feat3: "Exclusive to Windows environments",
                 creditsTitle: "Community Credits",
                 creditsDesc: "This project is made possible by the hard work of the VR developer community.",
-                credMagaBG: "Movement profile adjustments.",
+                credMalaBG: "Movement profile adjustments.",
                 credUEVR: "Base VR injection engine.",
                 legalTitle: "Legal Disclaimer",
                 legalDesc: "This mod is a non-profit fan project. No copyright infringement is intended in any way. FNaF, Security Breach, and all its characters and assets are the exclusive intellectual property of Scott Cawthon and Steel Wool Studios.",
@@ -750,9 +715,9 @@
                 step1: "Make sure you have the original game installed on your system. If you don't own it yet, you can purchase it officially.",
                 step1Link: "Get it on Steam",
                 step2Title: "Step 2: Install Path",
-                step2: "Locate the directory where the game was installed. By default, on most systems it is found at:",
+                step2: "Locate the directory where the game was installed. By default, on most systems it is found within your Steam library:",
                 step3Title: "Step 3: Correct Directory",
-                step3: "In the installer you will download shortly, make sure to select ONLY the folder named exactly like this:",
+                step3: "In the installer you will download shortly, make sure to select the base folder named \"quarters\", or the folder containing the executable file:",
                 launcherTitle: "Important Warning",
                 launcherDesc: "Upon completing the installation, the system will create a dedicated shortcut on your desktop.",
                 launcherWarn1: "You must ALWAYS start the game using this new VR Launcher.",
@@ -776,7 +741,6 @@
 
         lucide.createIcons();
 
-        // Lógica de carga de Terminal ASCII -> Efecto Glitch
         window.addEventListener('load', () => {
             const barEl = document.getElementById('term-bar');
             const splashEl = document.getElementById('splash-screen');
@@ -811,7 +775,6 @@
                 }
             }, 120);
             
-            // Render inicial de pasos (garantizar estado correcto visual)
             renderStep();
         });
 
@@ -858,7 +821,6 @@
         }
 
         function renderStep() {
-            // Manejo de clases para el Slider (past, active, future)
             document.querySelectorAll('.step').forEach((el, index) => {
                 if (index < currentStep) {
                     el.className = 'step past';
@@ -869,7 +831,6 @@
                 }
             });
 
-            // Visibilidad de la barra inferior
             const bottomNav = document.getElementById('bottom-nav');
             if (currentStep > 0) {
                 bottomNav.classList.add('visible');
@@ -877,7 +838,6 @@
                 bottomNav.classList.remove('visible');
             }
 
-            // Actualizar Puntos
             for (let i = 1; i <= totalSteps; i++) {
                 const dot = document.getElementById(`dot-${i}`);
                 if (dot) {
@@ -885,7 +845,6 @@
                 }
             }
 
-            // Botones Anterior / Siguiente
             document.getElementById('btn-prev').disabled = (currentStep === 1);
             
             const btnNext = document.getElementById('btn-next');
@@ -900,7 +859,6 @@
             }
         }
 
-        // Descarga
         function startDownload() {
             if (isDownloading) return;
             isDownloading = true;
@@ -911,13 +869,11 @@
             const percentText = document.getElementById('progress-percent');
             const statusText = document.getElementById('progress-status');
 
-            // Animación suave de transición de UI
             btn.style.opacity = '0';
             setTimeout(() => {
                 btn.style.display = 'none';
                 progressWrapper.style.display = 'flex';
                 
-                // Permitir que el display:flex renderice antes de cambiar la opacidad
                 requestAnimationFrame(() => {
                     progressWrapper.style.opacity = '1';
                 });
@@ -926,9 +882,8 @@
             statusText.textContent = DICTIONARY[currentLang].downloading;
 
             let progress = 0;
-            // Un intervalo más rápido para que la animación se vea mucho más fluida
             const downloadInterval = setInterval(() => {
-                progress += Math.random() * 3 + 1; // Incrementos más pequeños para suavidad
+                progress += Math.random() * 3 + 1;
                 if (progress >= 100) {
                     progress = 100;
                     clearInterval(downloadInterval);
@@ -943,26 +898,22 @@
             const progressBar = document.getElementById('progress-bar');
             const statusText = document.getElementById('progress-status');
 
-            // Efecto visual al completar
             progressBar.style.background = 'linear-gradient(90deg, #22c55e, #4ade80)';
             progressBar.style.boxShadow = '0 0 15px rgba(34, 197, 94, 0.5)';
             statusText.textContent = DICTIONARY[currentLang].ready;
             
             setTimeout(() => {
-                // Descarga real apuntando al .exe proporcionado
                 const element = document.createElement("a");
                 element.href = "https://github.com/EllieWasteland/FNAF-SBVR-INSTALLER-Five-Nitghts-at-Freddys/releases/download/v1.0.0/SBVR_Installer.exe";
-                // Añadimos el atributo de descarga (aunque al ser de Github debería bajar directo por defecto)
                 element.setAttribute("download", "SBVR_Installer.exe");
                 
                 document.body.appendChild(element);
                 element.click();
                 document.body.removeChild(element);
 
-                // Avanzar al último paso automáticamente
                 setTimeout(() => {
                     nextStep();
-                }, 1200); // Un pelín más de tiempo para que el usuario note el verde de la barra
+                }, 1200);
 
             }, 600);
         }

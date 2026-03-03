@@ -6,7 +6,7 @@ import zipfile
 import subprocess
 import glob
 import json
-import win32com.client  # Importación añadida para crear el acceso directo
+import win32com.client  
 
 def get_base_path():
     if hasattr(sys, '_MEIPASS'):
@@ -27,7 +27,6 @@ class InstallApi:
     def select_folder(self):
         try:
             window = webview.windows[0]
-            # Corregido el warning: usando webview.FileDialog.FOLDER en lugar de FOLDER_DIALOG
             result = window.create_file_dialog(webview.FileDialog.FOLDER, directory="")
             if result and len(result) > 0:
                 return result[0]
@@ -36,8 +35,56 @@ class InstallApi:
         return None
 
     def verify_exe(self, folder_path):
-        exe_path = os.path.join(folder_path, "fnaf9", "Binaries", "Win64", "fnaf9-Win64-Shipping.exe")
-        return os.path.exists(exe_path)
+        folder_path = os.path.normpath(folder_path)
+
+        exe_path_A = os.path.join(folder_path, "fnaf9", "Binaries", "Win64", "fnaf9-Win64-Shipping.exe")
+        if os.path.exists(exe_path_A):
+            return folder_path
+
+
+        exe_path_B = os.path.join(folder_path, "fnaf9-Win64-Shipping.exe")
+        if os.path.exists(exe_path_B):
+            # folder_path = .../quarters/fnaf9/Binaries/Win64 -> Regresamos a la raíz (3 niveles arriba)
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(folder_path)))
+            return base_path
+
+        # Caso 3: El usuario seleccionó la carpeta "fnaf9"
+        exe_path_C = os.path.join(folder_path, "Binaries", "Win64", "fnaf9-Win64-Shipping.exe")
+        if os.path.exists(exe_path_C):
+            base_path = os.path.dirname(folder_path)
+            return base_path
+
+        # Caso 4: El usuario seleccionó la carpeta "Binaries"
+        exe_path_D = os.path.join(folder_path, "Win64", "fnaf9-Win64-Shipping.exe")
+        if os.path.exists(exe_path_D):
+            base_path = os.path.dirname(os.path.dirname(folder_path))
+            return base_path
+
+        return False
+
+    def get_common_steam_paths(self):
+        paths = [
+            r"C:\Program Files (x86)\Steam\steamapps\common\quarters",
+            r"C:\Program Files\Steam\steamapps\common\quarters",
+            r"D:\SteamLibrary\steamapps\common\quarters",
+            r"E:\SteamLibrary\steamapps\common\quarters",
+            r"F:\SteamLibrary\steamapps\common\quarters",
+        ]
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam")
+            steam_path = winreg.QueryValueEx(key, "InstallPath")[0]
+            paths.insert(0, os.path.join(steam_path, "steamapps", "common", "quarters"))
+        except Exception:
+            pass
+        return paths
+
+    def auto_find_dir(self):
+        for p in self.get_common_steam_paths():
+            base = self.verify_exe(p)
+            if base:
+                return base
+        return None
 
     def install(self, folder_path, lenguaje="en"):
         try:
@@ -70,14 +117,12 @@ class InstallApi:
             if os.path.exists(launcher_src):
                 shutil.copy2(launcher_src, launcher_dest)
 
-            # Generar el archivo launcher_config.json
             config_data = {
                 "lenguaje": lenguaje
             }
             config_path = os.path.join(win64_path, "launcher_config.json")
             with open(config_path, "w", encoding="utf-8") as json_file:
                 json.dump(config_data, json_file, indent=4)
-
 
             shortcut_path = os.path.join(self.desktop_path, "FNAF SBVR.lnk")
             
@@ -91,7 +136,6 @@ class InstallApi:
             return "success"
             
         except Exception as e:
-            # Imprimir el error en consola puede ayudar a depurar si algo falla
             print(f"Error durante la instalación: {e}")
             return "error"
 
@@ -103,7 +147,7 @@ def main():
     
     webview.create_window(
         title='FNAF: SBVR - Setup',
-        url='index.html',
+        url='SBVR_Installer.html',
         js_api=api,
         width=1080,
         height=720,

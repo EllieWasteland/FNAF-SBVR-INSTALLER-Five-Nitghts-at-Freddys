@@ -173,7 +173,7 @@
                                 <i data-lucide="folder-search" class="w-8 h-8"></i>
                             </div>
                             <h4 class="text-white font-medium mb-2 truncate max-w-full px-2" id="folder-status-title" data-i18n="folder_none">Ninguna carpeta seleccionada</h4>
-                            <p class="text-white/60 text-sm mb-6 max-w-xs" id="folder-status-desc" data-i18n="folder_none_desc">Busca la carpeta principal llamada "Five Nights at Freddys Security Breach".</p>
+                            <p class="text-white/60 text-sm mb-6 max-w-xs" id="folder-status-desc" data-i18n="folder_none_desc">Busca la carpeta principal llamada "quarters" o la subcarpeta que contiene el ejecutable.</p>
                             
                             <button id="btn-select-folder" class="px-6 py-3 rounded-full bg-white/10 border border-white/30 text-white hover:bg-white/20 transition-all duration-300 flex items-center gap-2 text-sm font-medium focus:outline-none cursor-pointer shadow-md">
                                 <i data-lucide="folder-plus" class="w-4 h-4"></i>
@@ -292,7 +292,7 @@
                 step_1_title: "Preparativos VR",
                 step_1_desc: "Verificando el estado actual de tu juego.",
                 step_2_title: "Directorio del Juego",
-                step_2_desc: "Selecciona la carpeta base de FNAF: Security Breach.",
+                step_2_desc: "Selecciona la carpeta base 'quarters' o donde esté el ejecutable.",
                 step_3_title: "Listo para instalar",
                 step_3_desc: "Revisa los componentes que se integrarán en tu equipo.",
                 step_4_title: "Instalando Mod",
@@ -313,7 +313,7 @@
                 saves_warning: "* Es obligatorio haber abierto el juego normal al menos una vez para generar los archivos de guardado base y poder continuar con la instalación.",
                 
                 folder_none: "Ninguna carpeta seleccionada",
-                folder_none_desc: "Busca la carpeta principal llamada \"Five Nights at Freddys Security Breach\".",
+                folder_none_desc: "Busca la carpeta principal llamada \"quarters\" o la subcarpeta que contiene el ejecutable.",
                 btn_browse: "Examinar...",
                 btn_change_folder: "Cambiar Carpeta",
                 btn_searching: "Buscando...",
@@ -351,7 +351,7 @@
                 step_1_title: "VR Preparations",
                 step_1_desc: "Verifying the current state of your game.",
                 step_2_title: "Game Directory",
-                step_2_desc: "Select the FNAF: Security Breach base folder.",
+                step_2_desc: "Select the base folder 'quarters' or the one containing the executable.",
                 step_3_title: "Ready to Install",
                 step_3_desc: "Review the components that will be integrated into your system.",
                 step_4_title: "Installing Mod",
@@ -372,7 +372,7 @@
                 saves_warning: "* You must have launched the normal game at least once to generate base save files before continuing.",
                 
                 folder_none: "No folder selected",
-                folder_none_desc: "Locate the main folder named \"Five Nights at Freddys Security Breach\".",
+                folder_none_desc: "Locate the main folder named \"quarters\" or the subfolder containing the executable.",
                 btn_browse: "Browse...",
                 btn_change_folder: "Change Folder",
                 btn_searching: "Searching...",
@@ -437,8 +437,9 @@
             } else {
                 console.warn(`Simulando API Python: ${method}`, args);
                 if (method === 'check_saves') return new Promise(res => setTimeout(() => res(true), 1500));
-                if (method === 'select_folder') return new Promise(res => setTimeout(() => res("C:/Juegos/Five Nights at Freddys Security Breach"), 1000));
-                if (method === 'verify_exe') return new Promise(res => setTimeout(() => res(true), 500));
+                if (method === 'select_folder') return new Promise(res => setTimeout(() => res("C:/Juegos/quarters"), 1000));
+                if (method === 'verify_exe') return new Promise(res => setTimeout(() => res(args[0]), 500)); // Simulamos que devuelve la ruta
+                if (method === 'auto_find_dir') return new Promise(res => setTimeout(() => res(null), 1000)); // Simulamos no encontrarlo automáticamente
                 if (method === 'install') return new Promise(res => setTimeout(() => res("success"), 3500));
                 if (method === 'close_app') console.log("Cerrando...");
             }
@@ -534,6 +535,38 @@
             }
             updateUI(); 
             lucide.createIcons();
+
+            // Auto Search for game directory after saves check
+            checkAutoFolder();
+        }
+
+        // --- NEW AUTO SEARCH FUNCTION ---
+        async function checkAutoFolder() {
+            const autoPath = await apiCall('auto_find_dir');
+            if (autoPath) {
+                isFolderSelected = true;
+                selectedFolderPath = autoPath;
+                document.getElementById('summary-path').textContent = autoPath;
+                
+                document.getElementById('folder-status-icon').innerHTML = '<i data-lucide="folder-check" class="w-8 h-8 text-green-300"></i>';
+                document.getElementById('folder-status-icon').classList.add('bg-green-500/20', 'border-green-500/30');
+                
+                const titleEl = document.getElementById('folder-status-title');
+                titleEl.textContent = t().folder_correct;
+                titleEl.classList.remove('text-red-400');
+                
+                document.getElementById('folder-status-desc').textContent = autoPath;
+                
+                document.getElementById('folder-card').classList.add('bg-green-900/10', 'border-green-500/30');
+                document.getElementById('folder-card').classList.remove('bg-white/5', 'border-white/10', 'bg-red-900/10', 'border-red-500/30');
+                
+                const btnSelectFolder = document.getElementById('btn-select-folder');
+                btnSelectFolder.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4"></i><span id="btn-folder-text">${t().btn_change_folder}</span>`;
+                btnSelectFolder.classList.replace('bg-white/10', 'bg-white/20');
+                
+                setFolderVisualSuccess();
+                updateUI(); // En caso de que ya estemos en el paso 2
+            }
         }
 
         function updateUI() {
@@ -692,12 +725,13 @@
             const folder = await apiCall('select_folder');
             
             if (folder) {
-                const isValid = await apiCall('verify_exe', folder);
+                // Ahora verify_exe devuelve la ruta final procesada si es válida o False (en JS viene como null/false)
+                const resolvedPath = await apiCall('verify_exe', folder);
                 
-                if (isValid) {
+                if (resolvedPath) {
                     isFolderSelected = true;
-                    selectedFolderPath = folder;
-                    document.getElementById('summary-path').textContent = folder;
+                    selectedFolderPath = resolvedPath;
+                    document.getElementById('summary-path').textContent = resolvedPath;
                     
                     document.getElementById('folder-status-icon').innerHTML = '<i data-lucide="folder-check" class="w-8 h-8 text-green-300"></i>';
                     document.getElementById('folder-status-icon').classList.add('bg-green-500/20', 'border-green-500/30');
@@ -706,7 +740,7 @@
                     titleEl.textContent = t().folder_correct;
                     titleEl.classList.remove('text-red-400');
                     
-                    document.getElementById('folder-status-desc').textContent = folder;
+                    document.getElementById('folder-status-desc').textContent = resolvedPath;
                     
                     document.getElementById('folder-card').classList.add('bg-green-900/10', 'border-green-500/30');
                     document.getElementById('folder-card').classList.remove('bg-white/5', 'border-white/10', 'bg-red-900/10', 'border-red-500/30');
@@ -804,7 +838,6 @@
                     }
                 }, 200);
 
-                // --- AHORA SE ENVÍA EL IDIOMA (currentLang) EN LUGAR DE LA DESCRIPCIÓN ---
                 const result = await apiCall('install', selectedFolderPath, currentLang);
 
                 clearInterval(fakeInterval);
@@ -833,7 +866,7 @@
             
             headerTitle.textContent = t().step_success_title;
             headerDesc.textContent = t().step_success_desc;
-            headerIndicator.textContent = " "; // Blank out or custom string
+            headerIndicator.textContent = " "; 
 
             successStep.classList.add('active');
             
