@@ -44,17 +44,17 @@ class InstallApi:
 
         exe_path_B = os.path.join(folder_path, "fnaf9-Win64-Shipping.exe")
         if os.path.exists(exe_path_B):
-            # folder_path = .../quarters/fnaf9/Binaries/Win64 -> Regresamos a la raíz (3 niveles arriba)
+
             base_path = os.path.dirname(os.path.dirname(os.path.dirname(folder_path)))
             return base_path
 
-        # Caso 3: El usuario seleccionó la carpeta "fnaf9"
+
         exe_path_C = os.path.join(folder_path, "Binaries", "Win64", "fnaf9-Win64-Shipping.exe")
         if os.path.exists(exe_path_C):
             base_path = os.path.dirname(folder_path)
             return base_path
 
-        # Caso 4: El usuario seleccionó la carpeta "Binaries"
+
         exe_path_D = os.path.join(folder_path, "Win64", "fnaf9-Win64-Shipping.exe")
         if os.path.exists(exe_path_D):
             base_path = os.path.dirname(os.path.dirname(folder_path))
