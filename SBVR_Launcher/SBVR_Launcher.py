@@ -190,7 +190,7 @@ if __name__ == "__main__":
     lenguaje_config = cargar_configuracion(exe_dir)
 
     api = LauncherAPI(lang=lenguaje_config)
-    html_path = os.path.join(base_dir, "launcherUI.html")
+    html_path = os.path.join(base_dir, "SBVR_launcherUI.html")
 
     window = webview.create_window(
         title='FNAF9 VR Launcher',

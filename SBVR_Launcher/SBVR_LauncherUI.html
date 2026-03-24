@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FNAF: SBVR - Launcher</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Tailwind CSS Local -->
+    <script src="tailwind.js"></script>
 
     <style>
         body {
-            font-family: 'Outfit', sans-serif;
+            /* Fallback a fuentes del sistema si 'Outfit' no está instalada localmente */
+            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             overflow: hidden;
             user-select: none;
@@ -149,6 +150,51 @@
     </main>
 
     <script>
+        // --- OFFLINE ICON ENGINE ---
+        // Implementación de iconos offline para el Launcher
+        const offlineIcons = {
+            'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+            'loader-2': '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
+            'headset': '<path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/><path d="M21 16v2a4 4 0 0 1-4 4h-5"/>',
+            'chevron-right': '<path d="m9 18 6-6-6-6"/>',
+            'monitor-play': '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="m10 7 5 3-5 3v-6Z"/>',
+            'cpu': '<rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/>',
+            'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+            'info': '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+            'lightbulb': '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+            'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+            'gamepad-2': '<line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.544-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>'
+        };
+
+        const lucide = {
+            createIcons: () => {
+                const elements = document.querySelectorAll('[data-lucide]');
+                elements.forEach(el => {
+                    const iconName = el.getAttribute('data-lucide');
+                    if(offlineIcons[iconName]) {
+                        if (el.tagName.toLowerCase() === 'svg') {
+                            el.innerHTML = offlineIcons[iconName];
+                        } else {
+                            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                            svg.setAttribute('viewBox', '0 0 24 24');
+                            svg.setAttribute('fill', 'none');
+                            svg.setAttribute('stroke', 'currentColor');
+                            svg.setAttribute('stroke-width', '2');
+                            svg.setAttribute('stroke-linecap', 'round');
+                            svg.setAttribute('stroke-linejoin', 'round');
+                            
+                            Array.from(el.attributes).forEach(attr => {
+                                svg.setAttribute(attr.name, attr.value);
+                            });
+
+                            svg.innerHTML = offlineIcons[iconName];
+                            el.parentNode.replaceChild(svg, el);
+                        }
+                    }
+                });
+            }
+        };
+
         lucide.createIcons();
 
         // ── Internacionalización (i18n) ──────────────────────────────────────
@@ -314,8 +360,8 @@
                 const pulseRing = document.querySelector('.pulse-ring');
                 if (pulseRing) pulseRing.className = "absolute w-40 h-40 bg-blue-500/20 rounded-full blur-2xl animate-pulse";
 
-                const mainIcon = document.querySelector('.relative.z-10 i[data-lucide="headset"]');
-                if (mainIcon) { mainIcon.setAttribute('data-lucide','monitor-play'); mainIcon.className = "w-16 h-16 text-blue-200"; }
+                const mainIcon = document.querySelector('.relative.z-10 i[data-lucide="headset"], .relative.z-10 svg[data-lucide="headset"]');
+                if (mainIcon) { mainIcon.setAttribute('data-lucide','monitor-play'); mainIcon.setAttribute('class', "w-16 h-16 text-blue-200"); }
 
                 const sc = document.getElementById('vr-status-container');
                 if (sc) sc.className = "flex items-center gap-2 text-blue-300 font-medium bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20";
@@ -341,7 +387,7 @@
             const vrWarning    = document.getElementById('vr-warning-text');
             const statusText   = document.getElementById('status-text');
             const pulseRing    = document.querySelector('.pulse-ring');
-            const mainIcon     = document.querySelector('.relative.z-10 i[data-lucide="headset"]');
+            const mainIcon     = document.querySelector('.relative.z-10 i[data-lucide="headset"], .relative.z-10 svg[data-lucide="headset"], .relative.z-10 i[data-lucide="monitor-play"], .relative.z-10 svg[data-lucide="monitor-play"]');
             const sc           = document.getElementById('vr-status-container');
 
             statusText.textContent = lang.statusRunning;
@@ -350,7 +396,11 @@
             if (sc) sc.className = "flex items-center gap-2 text-green-300 font-medium bg-green-500/10 px-6 py-2.5 rounded-full border border-green-500/30 shadow-[0_0_15px_rgba(74,222,128,0.2)] fade-in";
             if (vrSpinner) { vrSpinner.setAttribute('data-lucide','gamepad-2'); vrSpinner.classList.remove('animate-spin'); }
             if (pulseRing) pulseRing.className = "absolute w-40 h-40 bg-green-500/30 rounded-full blur-2xl pulse-ring";
-            if (mainIcon)  mainIcon.classList.replace('text-purple-200','text-green-300');
+            if (mainIcon)  { 
+                // Si es svg con el engine offline, actualizamos las clases
+                mainIcon.classList.remove('text-purple-200', 'text-blue-200');
+                mainIcon.classList.add('text-green-300'); 
+            }
             if (vrWarning) { vrWarning.classList.remove('hidden'); vrWarning.classList.add('block'); }
 
             lucide.createIcons();
@@ -367,8 +417,9 @@
             const btnText = document.getElementById('btn-error-back');
             btnText.textContent = lang.errorClose;
             
-            const btnIcon = btnContainer.querySelector('i');
-            btnIcon.setAttribute('data-lucide', 'x');
+            // Encontrar y actualizar el icono
+            const btnIcon = btnContainer.querySelector('i, svg');
+            if(btnIcon) btnIcon.setAttribute('data-lucide', 'x');
             
             lucide.createIcons();
         }
@@ -410,10 +461,10 @@
 
             document.getElementById('status-text').textContent = lang.statusSelect;
             
-            const mainIcon = document.querySelector('.relative.z-10 i[data-lucide="monitor-play"]');
+            const mainIcon = document.querySelector('.relative.z-10 i[data-lucide="monitor-play"], .relative.z-10 svg[data-lucide="monitor-play"]');
             if(mainIcon) {
                 mainIcon.setAttribute('data-lucide','headset');
-                mainIcon.className = "w-16 h-16 text-purple-200";
+                mainIcon.setAttribute('class', "w-16 h-16 text-purple-200");
             }
             lucide.createIcons();
         }
