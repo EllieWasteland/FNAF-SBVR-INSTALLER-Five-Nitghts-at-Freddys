@@ -6,7 +6,7 @@ import zipfile
 import subprocess
 import glob
 import json
-import win32com.client  
+from pyshortcuts import make_shortcut  # Reemplazamos win32com.client por pyshortcuts
 
 def get_base_path():
     if hasattr(sys, '_MEIPASS'):
@@ -37,46 +37,50 @@ class InstallApi:
     def verify_exe(self, folder_path):
         folder_path = os.path.normpath(folder_path)
 
+        # Chequeo 1: Es la carpeta base correcta que ya contiene fnaf9/Binaries...
         exe_path_A = os.path.join(folder_path, "fnaf9", "Binaries", "Win64", "fnaf9-Win64-Shipping.exe")
         if os.path.exists(exe_path_A):
             return folder_path
 
-
+        # Chequeo 2: El usuario seleccionó la carpeta Win64 directamente
         exe_path_B = os.path.join(folder_path, "fnaf9-Win64-Shipping.exe")
         if os.path.exists(exe_path_B):
-
             base_path = os.path.dirname(os.path.dirname(os.path.dirname(folder_path)))
             return base_path
 
-
-        exe_path_C = os.path.join(folder_path, "Binaries", "Win64", "fnaf9-Win64-Shipping.exe")
+        # Chequeo 3: El usuario seleccionó la carpeta Binaries
+        exe_path_C = os.path.join(folder_path, "Win64", "fnaf9-Win64-Shipping.exe")
         if os.path.exists(exe_path_C):
-            base_path = os.path.dirname(folder_path)
+            base_path = os.path.dirname(os.path.dirname(folder_path))
             return base_path
 
-
-        exe_path_D = os.path.join(folder_path, "Win64", "fnaf9-Win64-Shipping.exe")
+        # Chequeo 4: El usuario seleccionó la carpeta fnaf9
+        exe_path_D = os.path.join(folder_path, "Binaries", "Win64", "fnaf9-Win64-Shipping.exe")
         if os.path.exists(exe_path_D):
-            base_path = os.path.dirname(os.path.dirname(folder_path))
+            base_path = os.path.dirname(folder_path)
             return base_path
 
         return False
 
     def get_common_steam_paths(self):
+        # Rutas comunes en diferentes unidades posibles (Buscando siempre la carpeta Quarters)
         paths = [
-            r"C:\Program Files (x86)\Steam\steamapps\common\quarters",
-            r"C:\Program Files\Steam\steamapps\common\quarters",
-            r"D:\SteamLibrary\steamapps\common\quarters",
-            r"E:\SteamLibrary\steamapps\common\quarters",
-            r"F:\SteamLibrary\steamapps\common\quarters",
+            r"C:\Program Files (x86)\Steam\steamapps\common\Quarters",
+            r"C:\Program Files\Steam\steamapps\common\Quarters",
+            r"D:\SteamLibrary\steamapps\common\Quarters",
+            r"E:\SteamLibrary\steamapps\common\Quarters",
+            r"F:\SteamLibrary\steamapps\common\Quarters",
         ]
+        
+        # Intentar obtener la ruta principal de Steam mediante el registro de Windows
         try:
             import winreg
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam")
             steam_path = winreg.QueryValueEx(key, "InstallPath")[0]
-            paths.insert(0, os.path.join(steam_path, "steamapps", "common", "quarters"))
+            paths.insert(0, os.path.join(steam_path, "steamapps", "common", "Quarters"))
         except Exception:
             pass
+            
         return paths
 
     def auto_find_dir(self):
@@ -124,14 +128,24 @@ class InstallApi:
             with open(config_path, "w", encoding="utf-8") as json_file:
                 json.dump(config_data, json_file, indent=4)
 
-            shortcut_path = os.path.join(self.desktop_path, "FNAF SBVR.lnk")
-            
-            shell = win32com.client.Dispatch("WScript.Shell")
-            shortcut = shell.CreateShortCut(shortcut_path)
-            shortcut.TargetPath = launcher_dest
-            shortcut.WorkingDirectory = win64_path
-            shortcut.Description = "FNAF: Security Breach VR"
-            shortcut.Save()
+            try:
+                icon_path = os.path.join(self.base_dir, "logo.ico")
+                if not os.path.exists(icon_path):
+                    icon_path = launcher_dest
+
+                make_shortcut(
+                    script=launcher_dest,         # El archivo base a ejecutar
+                    executable=launcher_dest,     # Forzamos el ejecutable en el acceso directo
+                    name='FNAF: Security Breach VR',
+                    description='FNAF: Security Breach VR',
+                    icon=icon_path,               # Ruta al ícono
+                    terminal=False,    
+                    desktop=True,      
+                    startmenu=True     
+                )
+                print("Acceso directo creado exitosamente con pyshortcuts.")
+            except Exception as e:
+                print(f"No se pudo crear el acceso directo: {e}")
 
             return "success"
             

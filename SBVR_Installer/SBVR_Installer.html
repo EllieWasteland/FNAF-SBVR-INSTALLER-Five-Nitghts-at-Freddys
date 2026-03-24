@@ -171,8 +171,12 @@
                                 <i data-lucide="folder-search" class="w-8 h-8"></i>
                             </div>
                             <h4 class="text-white font-medium mb-2 truncate max-w-full px-2" id="folder-status-title" data-i18n="folder_none">Ninguna carpeta seleccionada</h4>
-                            <p class="text-white/60 text-sm mb-6 max-w-xs" id="folder-status-desc" data-i18n="folder_none_desc">Busca la carpeta principal llamada "quarters" o la subcarpeta que contiene el ejecutable.</p>
+                            <p class="text-white/60 text-sm mb-3 max-w-xs" id="folder-status-desc" data-i18n="folder_none_desc">Busca la carpeta principal llamada "quarters" o la subcarpeta que contiene el ejecutable.</p>
                             
+                            <div id="folder-path-display" class="hidden mb-6 w-full max-w-sm bg-black/40 border border-white/10 rounded-lg p-3 text-white/80 font-mono text-[11px] md:text-xs break-all shadow-inner relative group">
+                                <!-- Path injectado por JS -->
+                            </div>
+
                             <button id="btn-select-folder" class="px-6 py-3 rounded-full bg-white/10 border border-white/30 text-white hover:bg-white/20 transition-all duration-300 flex items-center gap-2 text-sm font-medium focus:outline-none cursor-pointer shadow-md">
                                 <i data-lucide="folder-plus" class="w-4 h-4"></i>
                                 <span id="btn-folder-text" data-i18n="btn_browse">Examinar...</span>
@@ -281,9 +285,6 @@
     </main>
 
     <script>
-        // --- OFFLINE ICON ENGINE ---
-        // Eliminar el CDN de Lucide requeriría importar todos los SVG a mano. Para mantener el código limpio y 100% offline, 
-        // aquí tienes un pequeño motor de renderizado de iconos SVG nativo que reemplaza a la librería de forma transparente.
         const offlineIcons = {
             'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
             'globe': '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
@@ -321,11 +322,9 @@
                 elements.forEach(el => {
                     const iconName = el.getAttribute('data-lucide');
                     if(offlineIcons[iconName]) {
-                        // Si el elemento ya es un SVG (por un cambio dinámico), solo actualiza el contenido interior.
                         if (el.tagName.toLowerCase() === 'svg') {
                             el.innerHTML = offlineIcons[iconName];
                         } else {
-                            // Si es una etiqueta <i> nueva, se transforma a <svg>
                             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                             svg.setAttribute('viewBox', '0 0 24 24');
                             svg.setAttribute('fill', 'none');
@@ -334,7 +333,6 @@
                             svg.setAttribute('stroke-linecap', 'round');
                             svg.setAttribute('stroke-linejoin', 'round');
                             
-                            // Copiar todos los atributos originales (id, class, data-lucide, etc)
                             Array.from(el.attributes).forEach(attr => {
                                 svg.setAttribute(attr.name, attr.value);
                             });
@@ -378,13 +376,16 @@
                 
                 folder_none: "Ninguna carpeta seleccionada",
                 folder_none_desc: "Busca la carpeta principal llamada \"quarters\" o la subcarpeta que contiene el ejecutable.",
-                btn_browse: "Examinar...",
-                btn_change_folder: "Cambiar Carpeta",
-                btn_searching: "Buscando...",
-                btn_retry: "Intentar de nuevo",
+                folder_auto_title: "Ruta Compatible Detectada",
+                folder_auto_desc: "Se ha detectado el juego automáticamente en las carpetas comunes de Steam. Haz clic en Siguiente para instalar ahí, o elige otra ruta.",
                 folder_correct: "Carpeta Correcta",
+                folder_correct_desc: "Los archivos base del juego han sido verificados. Puedes continuar.",
                 folder_error: "Ejecutable no encontrado",
                 folder_error_desc: "La carpeta seleccionada no contiene los archivos base correctos del juego.",
+                btn_browse: "Examinar...",
+                btn_change_folder: "Seleccionar otra instalación",
+                btn_searching: "Buscando...",
+                btn_retry: "Intentar de nuevo",
                 
                 feature_1_title: "Motor UEVR",
                 feature_1_desc: "Se copiarán los inyectores necesarios para habilitar la Realidad Virtual en el motor gráfico.",
@@ -437,13 +438,16 @@
                 
                 folder_none: "No folder selected",
                 folder_none_desc: "Locate the main folder named \"quarters\" or the subfolder containing the executable.",
-                btn_browse: "Browse...",
-                btn_change_folder: "Change Folder",
-                btn_searching: "Searching...",
-                btn_retry: "Try Again",
+                folder_auto_title: "Compatible Route Detected",
+                folder_auto_desc: "The game was detected automatically in standard Steam folders. Click Next to install there, or choose another path.",
                 folder_correct: "Correct Folder",
+                folder_correct_desc: "Base game files have been verified. You can proceed.",
                 folder_error: "Executable not found",
                 folder_error_desc: "The selected folder doesn't contain the correct base game files.",
+                btn_browse: "Browse...",
+                btn_change_folder: "Select another installation",
+                btn_searching: "Searching...",
+                btn_retry: "Try Again",
                 
                 feature_1_title: "UEVR Engine",
                 feature_1_desc: "The required injectors to enable Virtual Reality in the graphics engine will be copied.",
@@ -503,7 +507,7 @@
                 if (method === 'check_saves') return new Promise(res => setTimeout(() => res(true), 1500));
                 if (method === 'select_folder') return new Promise(res => setTimeout(() => res("C:/Juegos/quarters"), 1000));
                 if (method === 'verify_exe') return new Promise(res => setTimeout(() => res(args[0]), 500)); 
-                if (method === 'auto_find_dir') return new Promise(res => setTimeout(() => res(null), 1000)); 
+                if (method === 'auto_find_dir') return new Promise(res => setTimeout(() => res("C:/Program Files (x86)/Steam/steamapps/common/Quarters"), 1000)); 
                 if (method === 'install') return new Promise(res => setTimeout(() => res("success"), 3500));
                 if (method === 'close_app') console.log("Cerrando...");
             }
@@ -604,7 +608,7 @@
             checkAutoFolder();
         }
 
-        // --- NEW AUTO SEARCH FUNCTION ---
+        // --- NEW AUTO SEARCH FUNCTION WITH IMPROVED UI ---
         async function checkAutoFolder() {
             const autoPath = await apiCall('auto_find_dir');
             if (autoPath) {
@@ -616,10 +620,14 @@
                 document.getElementById('folder-status-icon').classList.add('bg-green-500/20', 'border-green-500/30');
                 
                 const titleEl = document.getElementById('folder-status-title');
-                titleEl.textContent = t().folder_correct;
+                titleEl.textContent = t().folder_auto_title;
                 titleEl.classList.remove('text-red-400');
                 
-                document.getElementById('folder-status-desc').textContent = autoPath;
+                document.getElementById('folder-status-desc').textContent = t().folder_auto_desc;
+                
+                const pathEl = document.getElementById('folder-path-display');
+                pathEl.textContent = autoPath;
+                pathEl.classList.remove('hidden');
                 
                 document.getElementById('folder-card').classList.add('bg-green-900/10', 'border-green-500/30');
                 document.getElementById('folder-card').classList.remove('bg-white/5', 'border-white/10', 'bg-red-900/10', 'border-red-500/30');
@@ -803,7 +811,11 @@
                     titleEl.textContent = t().folder_correct;
                     titleEl.classList.remove('text-red-400');
                     
-                    document.getElementById('folder-status-desc').textContent = resolvedPath;
+                    document.getElementById('folder-status-desc').textContent = t().folder_correct_desc;
+                    
+                    const pathEl = document.getElementById('folder-path-display');
+                    pathEl.textContent = resolvedPath;
+                    pathEl.classList.remove('hidden');
                     
                     document.getElementById('folder-card').classList.add('bg-green-900/10', 'border-green-500/30');
                     document.getElementById('folder-card').classList.remove('bg-white/5', 'border-white/10', 'bg-red-900/10', 'border-red-500/30');
@@ -824,6 +836,9 @@
                     titleEl.classList.add('text-red-400');
                     
                     document.getElementById('folder-status-desc').textContent = t().folder_error_desc;
+                    
+                    const pathEl = document.getElementById('folder-path-display');
+                    pathEl.classList.add('hidden');
                     
                     document.getElementById('folder-card').classList.add('bg-red-900/10', 'border-red-500/30');
                     document.getElementById('folder-card').classList.remove('bg-white/5', 'border-white/10', 'bg-green-900/10', 'border-green-500/30');
